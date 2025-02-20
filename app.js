@@ -89,7 +89,7 @@ async function addToWaitingList() {
       return;
     }
   }
-  // Insertion dans la collection "waiting" (uid comme identifiant pour éviter les doublons)
+  // Insertion dans la collection "waiting"
   await setDoc(doc(db, "waiting", user.uid), {
     uid: user.uid,
     timestamp: Date.now(),
@@ -316,6 +316,7 @@ function transferChatToDiscussions(){
   chatContainer.style.display = "none";
 }
 
+// --- SUPPRESSION DE LA RÉPONSE AUTOMATIQUE ---
 sendMessageBtn.addEventListener("click", () => {
   const message = chatInput.value.trim();
   if(message){
@@ -331,21 +332,6 @@ sendMessageBtn.addEventListener("click", () => {
     chatWindow.appendChild(msgDiv);
     chatInput.value = "";
     chatWindow.scrollTop = chatWindow.scrollHeight;
-    
-    // Simulation d'une réponse après 2 secondes (pour démo)
-    setTimeout(() => {
-      const replyDiv = document.createElement("div");
-      replyDiv.classList.add("chat-message", "other");
-      const senderSpanOther = document.createElement("span");
-      senderSpanOther.classList.add("sender");
-      senderSpanOther.textContent = "L'autre";
-      const textPOther = document.createElement("p");
-      textPOther.textContent = "Réponse à: " + message;
-      replyDiv.appendChild(senderSpanOther);
-      replyDiv.appendChild(textPOther);
-      chatWindow.appendChild(replyDiv);
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    }, 2000);
   }
 });
 
