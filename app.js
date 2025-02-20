@@ -89,7 +89,7 @@ async function addToWaitingList() {
       return;
     }
   }
-  // Insertion dans la collection "waiting"
+  // Insertion dans la collection "waiting" avec uid comme identifiant pour éviter les doublons
   await setDoc(doc(db, "waiting", user.uid), {
     uid: user.uid,
     timestamp: Date.now(),
@@ -232,36 +232,63 @@ function updateWaitingCount(){
   waitingCountSpan.textContent = waitingCount;
 }
 
-// Vérifie si deux utilisateurs se correspondent en fonction de leurs préférences
+// Fonction de matching améliorée avec valeurs par défaut et logs
 function matchesCriteria(userData, candidateData) {
-  if(userData.preferences) {
-    const { ageMin, ageMax, meetingSex } = userData.preferences;
-    if(candidateData.age < ageMin || candidateData.age > ageMax) return false;
-    if(meetingSex && meetingSex !== "les-deux" && candidateData.sexe.toLowerCase() !== meetingSex.toLowerCase()) return false;
+  // Appliquer des valeurs par défaut si aucune préférence n'est renseignée
+  const { ageMin = 18, ageMax = 100, meetingSex = "les-deux" } = userData.preferences || {};
+  console.log(`Comparaison pour ${candidateData.uid} : âge ${candidateData.age} entre ${ageMin} et ${ageMax}`);
+  if (candidateData.age < ageMin || candidateData.age > ageMax) {
+    console.log(`→ Âge hors critères pour ${candidateData.uid}`);
+    return false;
+  }
+  if (meetingSex !== "les-deux" && candidateData.sexe.toLowerCase() !== meetingSex.toLowerCase()) {
+    console.log(`→ Sexe non conforme pour ${candidateData.uid} (attendu ${meetingSex}, obtenu ${candidateData.sexe})`);
+    return false;
   }
   return true;
 }
 
-// Tente de matcher l'utilisateur courant avec un autre utilisateur en attente
 async function attemptMatching(waitingDocs) {
   const user = auth.currentUser;
-  if(!user || !currentUserData) return;
+  if (!user || !currentUserData) return;
   // Vérifier que l'utilisateur courant est toujours inscrit
   const currentDoc = waitingDocs.find(doc => doc.data().uid === user.uid);
-  if(!currentDoc) return;
-  // Parcourir les autres utilisateurs en attente
+  if (!currentDoc) return;
+  
+  // Préférences et infos de l'utilisateur courant avec valeurs par défaut
+  const { ageMin = 18, ageMax = 100, meetingSex = "les-deux" } = currentUserData.preferences || {};
+  const userAge = currentUserData.age;
+  const userSex = currentUserData.sexe.toLowerCase();
+  
   for (const docSnapshot of waitingDocs) {
     const candidateData = docSnapshot.data();
-    if(candidateData.uid !== user.uid) {
-      if (matchesCriteria(currentUserData, candidateData) && matchesCriteria(candidateData, currentUserData)) {
-        console.log("Match trouvé entre", user.uid, "et", candidateData.uid);
-        // Match trouvé : retirer les deux utilisateurs de la waiting list et démarrer le chat
-        await deleteDoc(doc(db, "waiting", candidateData.uid));
-        await deleteDoc(doc(db, "waiting", user.uid));
-        waitingActive = false;
-        startChat();
-        break;
-      }
+    if (candidateData.uid === user.uid) continue; // Ignorer soi-même
+
+    // Préférences du candidat avec valeurs par défaut
+    const { ageMin: candidateAgeMin = 18, ageMax: candidateAgeMax = 100, meetingSex: candidateMeetingSex = "les-deux" } = candidateData.preferences || {};
+    const candidateAge = candidateData.age;
+    const candidateSex = candidateData.sexe.toLowerCase();
+
+    // Vérifier si le candidat correspond aux critères de l'utilisateur courant
+    const candidateMatchesUser = (candidateAge >= ageMin && candidateAge <= ageMax) &&
+      (meetingSex === "les-deux" || candidateSex === meetingSex.toLowerCase());
+
+    // Vérifier si l'utilisateur courant correspond aux critères du candidat
+    const userMatchesCandidate = (userAge >= candidateAgeMin && userAge <= candidateAgeMax) &&
+      (candidateMeetingSex === "les-deux" || userSex === candidateMeetingSex.toLowerCase());
+
+    console.log(`Comparaison entre ${user.uid} et ${candidateData.uid}:`);
+    console.log("UserPrefs:", { ageMin, ageMax, meetingSex }, "CandidateData:", candidateData);
+    console.log("candidateMatchesUser:", candidateMatchesUser, "userMatchesCandidate:", userMatchesCandidate);
+
+    if (candidateMatchesUser && userMatchesCandidate) {
+      console.log("Match trouvé entre", user.uid, "et", candidateData.uid);
+      // Supprimer les deux documents de la waiting list et démarrer le chat
+      await deleteDoc(doc(db, "waiting", candidateData.uid));
+      await deleteDoc(doc(db, "waiting", user.uid));
+      waitingActive = false;
+      startChat();
+      break;
     }
   }
 }
@@ -316,7 +343,7 @@ function transferChatToDiscussions(){
   chatContainer.style.display = "none";
 }
 
-// --- SUPPRESSION DE LA RÉPONSE AUTOMATIQUE ---
+// Gestion de l'envoi des messages (sans réponse automatique)
 sendMessageBtn.addEventListener("click", () => {
   const message = chatInput.value.trim();
   if(message){
