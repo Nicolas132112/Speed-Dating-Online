@@ -95,7 +95,7 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   const password = document.getElementById("password").value;
   const username = document.getElementById("username").value;
   const prenom = document.getElementById("prenom").value;
-  // Convertir le sexe en minuscules (homme, femme, autre)
+  // Conversion du sexe en minuscules
   const sexe = document.getElementById("sexe").value.toLowerCase(); 
   const codePostal = document.getElementById("code-postal").value;
   const ville = document.getElementById("ville").value;
@@ -125,7 +125,6 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
       email,
       username,
       prenom,
-      // On stocke le sexe en minuscules
       sexe, 
       age,
       codePostal,

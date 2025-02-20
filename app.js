@@ -31,12 +31,11 @@ menuToggle.addEventListener("click", () => {
 });
 
 const sections = document.querySelectorAll(".section");
-// Dès qu'on quitte la section "speed-dating", on retire l'utilisateur de la waiting list
+// Dès qu'on quitte la section "speed-dating", retirer l'utilisateur de la waiting list
 document.querySelectorAll("#sidebar ul li a").forEach(link => {
   link.addEventListener("click", async (e) => {
     e.preventDefault();
     const target = e.target.getAttribute("data-section");
-    // Quitte la waiting list si on change d'onglet
     if (target !== "speed-dating" && waitingActive) {
       await removeFromWaitingList();
       waitingActive = false;
@@ -44,7 +43,7 @@ document.querySelectorAll("#sidebar ul li a").forEach(link => {
     sections.forEach(sec => sec.classList.remove("active"));
     document.getElementById(target + "-section").classList.add("active");
     sidebar.classList.remove("active");
-    // Si on va sur "speed-dating", on ajoute l'utilisateur dans la waiting list
+    // Si on va sur "speed-dating", ajouter l'utilisateur dans la waiting list
     if (target === "speed-dating" && auth.currentUser) {
       await addToWaitingList();
     }
@@ -75,8 +74,8 @@ window.addEventListener("beforeunload", async () => {
 // ---------------------------
 async function addToWaitingList() {
   const user = auth.currentUser;
-  if (!user || waitingActive) return; // déjà inscrit ou non connecté
-  // Charger currentUserData si pas déjà fait
+  if (!user || waitingActive) return;
+  // Charger currentUserData si nécessaire
   if (!currentUserData) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
@@ -87,14 +86,13 @@ async function addToWaitingList() {
       return;
     }
   }
-  // Inscription dans "waiting"
+  // Inscription dans la collection "waiting"
   await setDoc(doc(db, "waiting", user.uid), {
     uid: user.uid,
     timestamp: Date.now(),
     preferences: currentUserData.preferences || {},
     age: currentUserData.age,
-    // On s'assure que c'est bien en minuscules
-    sexe: currentUserData.sexe.toLowerCase() 
+    sexe: currentUserData.sexe.toLowerCase()
   }, { merge: true });
   waitingActive = true;
   console.log("Utilisateur inscrit dans la waiting list");
@@ -146,7 +144,7 @@ auth.onAuthStateChanged(async (user) => {
 // Enregistrement des préférences
 // ---------------------------
 document.getElementById("save-preferences").addEventListener("click", async () => {
-  const meetingSex = document.getElementById("preference-sexe").value.toLowerCase(); 
+  const meetingSex = document.getElementById("preference-sexe").value.toLowerCase();
   const ageMin = parseInt(document.getElementById("age-min").value);
   const ageMax = parseInt(document.getElementById("age-max").value);
   const distance = document.getElementById("distance").value;
@@ -159,16 +157,18 @@ document.getElementById("save-preferences").addEventListener("click", async () =
     const userDocRef = doc(db, "users", user.uid);
     await setDoc(userDocRef, {
       preferences: {
-        // On stocke meetingSex en minuscules : "homme", "femme", "les-deux"
-        meetingSex, 
+        meetingSex,
         ageMin,
         ageMax,
         distance
       }
     }, { merge: true });
+    // Mettre à jour localement
+    currentUserData.preferences = { meetingSex, ageMin, ageMax, distance };
     showModal("Préférences sauvegardées !", null, null, true);
-    // Si l'utilisateur est déjà en attente, on met à jour son inscription
+    // Si l'utilisateur est déjà en waiting list, le retirer puis le réinscrire avec les nouvelles préférences
     if (waitingActive) {
+      await removeFromWaitingList();
       await addToWaitingList();
     }
   }
@@ -202,7 +202,7 @@ function showModal(message, onConfirm, onCancel, isAlert = false) {
 }
 
 // ---------------------------
-// Gestion du Speed Dating (waiting + matching)
+// Gestion du Speed Dating et Matching
 // ---------------------------
 const waitingScreen = document.getElementById("waiting-screen");
 const chatContainer = document.getElementById("chat-container");
@@ -218,7 +218,7 @@ let timeLeft = 540; // 9 minutes en secondes
 let waitingCount = 0;
 const waitingCountSpan = document.getElementById("waiting-count");
 
-// Écoute en temps réel de la collection "waiting"
+// Surveille en temps réel la collection "waiting"
 onSnapshot(collection(db, "waiting"), (snapshot) => {
   waitingCount = snapshot.size;
   updateWaitingCount();
@@ -232,41 +232,42 @@ function updateWaitingCount() {
   waitingCountSpan.textContent = waitingCount;
 }
 
-// Fonction de matching : compare l'âge et le sexe
+// Fonction de matching basée sur les critères réciproques
 async function attemptMatching(waitingDocs) {
   const user = auth.currentUser;
   if (!user || !currentUserData) return;
-  // Vérifier que l'utilisateur courant est bien inscrit
+  // Vérifier que l'utilisateur courant est dans la waiting list
   const currentDoc = waitingDocs.find(doc => doc.data().uid === user.uid);
   if (!currentDoc) return;
   
   // Préférences de l'utilisateur courant
   const { ageMin: userMin = 18, ageMax: userMax = 100, meetingSex: userMeetingSex = "les-deux" } = currentUserData.preferences || {};
   const userAge = currentUserData.age;
-  const userSex = (currentUserData.sexe || "").toLowerCase(); 
-
+  const userSex = (currentUserData.sexe || "").toLowerCase();
+  
+  // Parcourir les autres utilisateurs dans la waiting list
   for (const docSnapshot of waitingDocs) {
     const candidateData = docSnapshot.data();
-    if (candidateData.uid === user.uid) continue; // ignorer soi-même
-
+    if (candidateData.uid === user.uid) continue; // Ignorer soi-même
+    
     // Préférences du candidat
     const { ageMin: candMin = 18, ageMax: candMax = 100, meetingSex: candMeetingSex = "les-deux" } = candidateData.preferences || {};
     const candidateAge = candidateData.age;
     const candidateSex = (candidateData.sexe || "").toLowerCase();
-
-    // Vérification double
+    
+    // Vérification double : l'utilisateur courant doit correspondre aux critères du candidat et vice-versa
     const candidateMatchesUser = (candidateAge >= userMin && candidateAge <= userMax) &&
       (userMeetingSex === "les-deux" || candidateSex === userMeetingSex);
     const userMatchesCandidate = (userAge >= candMin && userAge <= candMax) &&
       (candMeetingSex === "les-deux" || userSex === candMeetingSex);
-
-    console.log(`Comparaison entre ${user.uid} et ${candidateData.uid}`);
+    
+    console.log(`Comparaison entre ${user.uid} et ${candidateData.uid}:`);
     console.log("User recherche :", { userMin, userMax, userMeetingSex }, "→ Candidat:", candidateData);
     console.log("candidateMatchesUser:", candidateMatchesUser, "userMatchesCandidate:", userMatchesCandidate);
-
+    
     if (candidateMatchesUser && userMatchesCandidate) {
       console.log("Match trouvé entre", user.uid, "et", candidateData.uid);
-      // Supprimer les deux documents de la waiting list
+      // Retirer les deux de la waiting list et démarrer le chat
       await deleteDoc(doc(db, "waiting", candidateData.uid));
       await deleteDoc(doc(db, "waiting", user.uid));
       waitingActive = false;
@@ -282,7 +283,7 @@ async function attemptMatching(waitingDocs) {
 function startChat() {
   waitingScreen.style.display = "none";
   chatContainer.style.display = "block";
-  timeLeft = 540; // 9 minutes
+  timeLeft = 540; // Réinitialiser le timer à 9 minutes
   updateChatTimer();
   timerInterval = setInterval(() => {
     timeLeft--;
@@ -326,7 +327,7 @@ function transferChatToDiscussions() {
   chatContainer.style.display = "none";
 }
 
-// Envoi de messages
+// Envoi de messages (sans réponse automatique)
 sendMessageBtn.addEventListener("click", () => {
   const message = chatInput.value.trim();
   if (message) {
