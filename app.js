@@ -31,7 +31,7 @@ menuToggle.addEventListener("click", () => {
 });
 
 const sections = document.querySelectorAll(".section");
-// Dès qu'on quitte la section "speed-dating", retirer l'utilisateur de la waiting list
+// Dès qu'on quitte la section "speed-dating", on retire l'utilisateur de la waiting list
 document.querySelectorAll("#sidebar ul li a").forEach(link => {
   link.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -155,6 +155,7 @@ document.getElementById("save-preferences").addEventListener("click", async () =
   const user = auth.currentUser;
   if (user) {
     const userDocRef = doc(db, "users", user.uid);
+    // Mettre à jour Firestore
     await setDoc(userDocRef, {
       preferences: {
         meetingSex,
@@ -166,7 +167,7 @@ document.getElementById("save-preferences").addEventListener("click", async () =
     // Mettre à jour localement
     currentUserData.preferences = { meetingSex, ageMin, ageMax, distance };
     showModal("Préférences sauvegardées !", null, null, true);
-    // Si l'utilisateur est déjà en waiting list, le retirer puis le réinscrire avec les nouvelles préférences
+    // Réinscrire l'utilisateur dans la waiting list avec les nouvelles prefs
     if (waitingActive) {
       await removeFromWaitingList();
       await addToWaitingList();
@@ -255,7 +256,7 @@ async function attemptMatching(waitingDocs) {
     const candidateAge = candidateData.age;
     const candidateSex = (candidateData.sexe || "").toLowerCase();
     
-    // Vérification double : l'utilisateur courant doit correspondre aux critères du candidat et vice-versa
+    // Vérification double
     const candidateMatchesUser = (candidateAge >= userMin && candidateAge <= userMax) &&
       (userMeetingSex === "les-deux" || candidateSex === userMeetingSex);
     const userMatchesCandidate = (userAge >= candMin && userAge <= candMax) &&
@@ -283,7 +284,7 @@ async function attemptMatching(waitingDocs) {
 function startChat() {
   waitingScreen.style.display = "none";
   chatContainer.style.display = "block";
-  timeLeft = 540; // Réinitialiser le timer à 9 minutes
+  timeLeft = 540; // 9 minutes
   updateChatTimer();
   timerInterval = setInterval(() => {
     timeLeft--;
@@ -327,7 +328,7 @@ function transferChatToDiscussions() {
   chatContainer.style.display = "none";
 }
 
-// Envoi de messages (sans réponse automatique)
+// Envoi de messages
 sendMessageBtn.addEventListener("click", () => {
   const message = chatInput.value.trim();
   if (message) {

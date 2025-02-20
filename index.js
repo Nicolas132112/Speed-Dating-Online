@@ -95,8 +95,8 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   const password = document.getElementById("password").value;
   const username = document.getElementById("username").value;
   const prenom = document.getElementById("prenom").value;
-  // Conversion du sexe en minuscules
-  const sexe = document.getElementById("sexe").value.toLowerCase(); 
+  // Convertir le sexe en minuscules
+  const sexe = document.getElementById("sexe").value.toLowerCase();
   const codePostal = document.getElementById("code-postal").value;
   const ville = document.getElementById("ville").value;
 
@@ -120,17 +120,17 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    // Sauvegarde des infos de base dans Firestore ; les préférences seront modifiées dans le profil
+    // Sauvegarde des infos de base dans Firestore
     await setDoc(doc(db, "users", user.uid), {
       email,
       username,
       prenom,
-      sexe, 
+      sexe,
       age,
       codePostal,
       ville,
       preferences: {
-        meetingSex: "", // sera défini plus tard
+        meetingSex: "",
         ageMin: 18,
         ageMax: 100,
         distance: "monpays"
