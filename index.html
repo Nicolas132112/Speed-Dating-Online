@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion - Speed Dating App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="logo-container">
+      <!-- Vérifiez que le fichier logo.png est présent -->
+      <img src="logo.png" alt="Logo" class="logo">
+    </div>
+    <h1>Bienvenue sur Speed Dating App</h1>
+
+    <!-- Connexion -->
+    <div id="login-container" class="card">
+      <h2>Connexion</h2>
+      <input type="email" id="email-login" placeholder="Email">
+      <input type="password" id="password-login" placeholder="Mot de passe">
+      <button id="login">Se connecter</button>
+      <p>Pas de compte ? <a href="#" id="show-signup">Créer un compte</a></p>
+    </div>
+
+    <!-- Inscription -->
+    <div id="signup-container" class="card" style="display:none;">
+      <h2>Créer un compte</h2>
+      <input type="email" id="email" placeholder="Email">
+      <input type="password" id="password" placeholder="Mot de passe">
+      <input type="text" id="username" placeholder="Nom d'utilisateur">
+      <input type="text" id="prenom" placeholder="Prénom">
+      <label for="sexe">Sexe :</label>
+      <select id="sexe">
+        <option value="Homme">Homme</option>
+        <option value="Femme">Femme</option>
+        <option value="Autre">Autre</option>
+      </select>
+      <label>Date de naissance :</label>
+      <div class="dob-container">
+        <select id="jour"></select>
+        <select id="mois"></select>
+        <select id="annee"></select>
+      </div>
+      <p id="age-confirmation"></p>
+      <input type="text" id="code-postal" placeholder="Code postal">
+      <select id="ville">
+        <option value="">Sélectionnez une ville</option>
+      </select>
+      <button id="signup-btn">Créer un compte</button>
+      <p>Déjà un compte ? <a href="#" id="show-login">Se connecter</a></p>
+    </div>
+  </div>
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="index.js"></script>
+</body>
+</html>

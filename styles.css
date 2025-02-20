@@ -1,0 +1,265 @@
+/* -----------------------
+   Réinitialisation de base
+------------------------ */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+/* Corps de la page */
+body {
+  background: linear-gradient(120deg, #ff78a4 0%, #ffa84d 50%, #a84cff 100%);
+  color: #fff;
+}
+
+/* Container (pages de connexion/inscription) */
+.container {
+  width: 100%;
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Cartes */
+.card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 15px;
+  padding: 30px 20px;
+  margin: 20px 0;
+}
+
+/* En-tête (app) */
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: none;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Icône menu */
+.menu-icon {
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+/* Petit logo dans l'en-tête */
+.header-logo .logo-small {
+  width: 40px;
+  height: 40px;
+}
+
+/* Menu latéral */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -250px;
+  width: 250px;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  padding-top: 60px;
+  transition: left 0.3s;
+  z-index: 999;
+}
+.sidebar.active {
+  left: 0;
+}
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+.sidebar ul li {
+  margin: 20px 0;
+  text-align: center;
+}
+.sidebar ul li a {
+  color: #fff;
+  text-decoration: none;
+  font-size: 18px;
+}
+
+/* Contenu principal */
+main {
+  margin-top: 60px;
+  padding: 20px;
+  text-align: center;
+}
+.section {
+  display: none;
+}
+.section.active {
+  display: block;
+}
+
+/* Logo (page de connexion) */
+.logo-container {
+  margin-bottom: 20px;
+}
+.logo {
+  max-width: 150px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Inputs et selects */
+input, select {
+  width: 80%;
+  margin: 8px auto;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 16px;
+  text-align: center;
+  outline: none;
+}
+::placeholder {
+  color: #f1f1f1;
+}
+
+/* Boutons */
+button {
+  width: 80%;
+  margin: 16px auto;
+  background-color: #ff4d4d;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  display: block;
+  transition: background-color 0.3s, opacity 0.3s;
+}
+button:hover {
+  background-color: #e53e3e;
+  opacity: 0.9;
+}
+
+/* Section Profil */
+.profile-info p {
+  margin: 5px 0;
+}
+.preferences {
+  margin: 20px 0;
+}
+.age-range-container input {
+  width: 35%;
+  padding: 8px;
+  margin: 5px;
+  border-radius: 5px;
+  border: none;
+  text-align: center;
+}
+.select-colored {
+  background-color: #ff4d4d;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Speed Dating */
+.waiting-screen {
+  text-align: center;
+  padding: 20px;
+}
+.loader {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #ff4d4d;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  margin: 20px auto;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.chat-container {
+  background: rgba(0,0,0,0.3);
+  padding: 10px;
+  border-radius: 10px;
+  text-align: left;
+  margin: auto;
+  max-width: 500px;
+}
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.chat-window {
+  border: 1px solid rgba(255,255,255,0.3);
+  height: 200px;
+  overflow-y: auto;
+  margin: 10px 0;
+  padding: 10px;
+  background: rgba(255,255,255,0.1);
+}
+.chat-message {
+  margin: 5px 0;
+  padding: 5px 10px;
+  border-radius: 5px;
+  max-width: 80%;
+}
+.chat-message.self {
+  background: rgba(255, 182, 193, 0.8);
+  align-self: flex-end;
+  text-align: right;
+}
+.chat-message.other {
+  background: rgba(173, 216, 230, 0.8);
+  align-self: flex-start;
+  text-align: left;
+}
+.chat-input {
+  display: flex;
+  gap: 5px;
+}
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right:0;
+  bottom:0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #fff;
+  color: #000;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+.modal-buttons {
+  margin-top: 20px;
+}
+.modal-buttons button {
+  width: 40%;
+  margin: 0 5%;
+}

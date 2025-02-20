@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speed Dating App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- En-tête avec icône menu et logo -->
+  <header>
+    <div class="menu-icon" id="menu-toggle">&#9776;</div>
+    <div class="header-logo">
+      <img src="logo.png" alt="Logo" class="logo-small">
+    </div>
+  </header>
+
+  <!-- Menu latéral -->
+  <nav id="sidebar" class="sidebar">
+    <ul>
+      <li><a href="#" data-section="home">Accueil</a></li>
+      <li><a href="#" data-section="profil">Profil</a></li>
+      <li><a href="#" data-section="speed-dating">Speed Dating</a></li>
+      <li><a href="#" data-section="discussions">Discussions</a></li>
+      <li><a href="#" id="logout">Déconnexion</a></li>
+    </ul>
+  </nav>
+
+  <!-- Contenu principal -->
+  <main id="main-content">
+    <!-- Accueil -->
+    <section id="home-section" class="section active">
+      <h2>Accueil</h2>
+      <p>Bienvenue sur Speed Dating App !</p>
+    </section>
+
+    <!-- Profil -->
+    <section id="profil-section" class="section">
+      <h2>Mon Profil</h2>
+      <div class="profile-info">
+        <p id="display-prenom"></p>
+        <p id="display-age"></p>
+        <p id="display-sexe"></p>
+        <p id="display-ville"></p>
+      </div>
+      <div class="preferences">
+        <h3>Mes Préférences de Rencontre</h3>
+        <label for="preference-sexe">Je souhaite rencontrer :</label>
+        <select id="preference-sexe" class="select-colored">
+          <option value="hommes">Hommes</option>
+          <option value="femmes">Femmes</option>
+          <option value="les-deux">Les deux</option>
+        </select>
+        <label>Tranche d'âge :</label>
+        <div class="age-range-container">
+          <input type="number" id="age-min" min="18" max="100" value="18"> -
+          <input type="number" id="age-max" min="18" max="100" value="100">
+        </div>
+        <label for="distance">Distance :</label>
+        <select id="distance">
+          <option value="10">10 km</option>
+          <option value="20">20 km</option>
+          <option value="50">50 km</option>
+          <option value="100">100 km</option>
+          <option value="200">200 km</option>
+          <option value="300">300 km</option>
+          <option value="monpays">Mon Pays</option>
+        </select>
+        <button id="save-preferences">Enregistrer mes préférences</button>
+      </div>
+    </section>
+
+    <!-- Speed Dating -->
+    <section id="speed-dating-section" class="section">
+      <h2>Speed Dating</h2>
+      <!-- Écran d'attente avec chargement dynamique -->
+      <div id="waiting-screen" class="waiting-screen">
+        <p>En attente d'une correspondance...</p>
+        <p>Personnes en attente: <span id="waiting-count">0</span></p>
+        <div class="loader"></div>
+      </div>
+      <!-- Zone de chat -->
+      <div id="chat-container" class="chat-container" style="display:none;">
+        <div class="chat-header">
+          <h2>Discussion en cours</h2>
+          <div id="chat-timer">09:00</div>
+        </div>
+        <div class="chat-window" id="chat-window"></div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="Votre message...">
+          <button id="send-message">Envoyer</button>
+        </div>
+        <button id="prolonger-btn">Prolonger</button>
+      </div>
+    </section>
+
+    <!-- Discussions -->
+    <section id="discussions-section" class="section">
+      <h2>Mes Discussions</h2>
+      <div id="discussions-list">
+        <!-- Les conversations sauvegardées apparaîtront ici -->
+      </div>
+    </section>
+  </main>
+  
+  <!-- Modal custom pour les pop-ups -->
+  <div id="custom-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <p id="modal-message"></p>
+      <div class="modal-buttons">
+        <button id="modal-confirm">Oui</button>
+        <button id="modal-cancel">Non</button>
+      </div>
+    </div>
+  </div>
+  
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
