@@ -31,30 +31,28 @@ menuToggle.addEventListener("click", () => {
 });
 
 const sections = document.querySelectorAll(".section");
+// Modification de la gestion de la navigation : dès qu'on quitte "speed-dating", on retire l'utilisateur de la waiting list.
 document.querySelectorAll("#sidebar ul li a").forEach(link => {
   link.addEventListener("click", async (e) => {
     e.preventDefault();
-    const currentActiveSection = document.querySelector(".section.active");
-    // Si on quitte la section Speed Dating, retirer l'utilisateur de la waiting list
-    if (currentActiveSection && currentActiveSection.id === "speed-dating-section" && waitingActive) {
+    const target = e.target.getAttribute("data-section");
+    // Si l'utilisateur navigue vers une section autre que "speed-dating", on le retire de la waiting list.
+    if (target !== "speed-dating" && waitingActive) {
       await removeFromWaitingList();
       waitingActive = false;
     }
-    const target = e.target.getAttribute("data-section");
-    if(target){
-      sections.forEach(sec => sec.classList.remove("active"));
-      document.getElementById(target + "-section").classList.add("active");
-      sidebar.classList.remove("active");
-      // Si l'utilisateur revient sur la section Speed Dating, on l'inscrit
-      if(target === "speed-dating" && auth.currentUser) {
-        await addToWaitingList();
-      }
+    sections.forEach(sec => sec.classList.remove("active"));
+    document.getElementById(target + "-section").classList.add("active");
+    sidebar.classList.remove("active");
+    // Si l'utilisateur navigue vers "speed-dating", on l'inscrit dans la waiting list.
+    if (target === "speed-dating" && auth.currentUser) {
+      await addToWaitingList();
     }
   });
 });
 
 document.getElementById("logout").addEventListener("click", async () => {
-  if(waitingActive){
+  if (waitingActive) {
     await removeFromWaitingList();
     waitingActive = false;
   }
@@ -82,7 +80,7 @@ async function addToWaitingList() {
   if (!currentUserData) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
-    if(userDoc.exists()){
+    if (userDoc.exists()){
       currentUserData = userDoc.data();
     } else {
       console.error("Données utilisateur introuvables");
@@ -118,17 +116,17 @@ async function removeFromWaitingList() {
 // Chargement des infos utilisateur
 // ---------------------------
 auth.onAuthStateChanged(async (user) => {
-  if(user){
+  if (user) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
-    if(userDoc.exists()){
+    if (userDoc.exists()){
       currentUserData = userDoc.data();
       document.getElementById("display-prenom").textContent = `Prénom: ${currentUserData.prenom}`;
       document.getElementById("display-age").textContent = `Âge: ${currentUserData.age}`;
       document.getElementById("display-sexe").textContent = `Sexe: ${currentUserData.sexe}`;
       document.getElementById("display-ville").textContent = `Ville: ${currentUserData.ville}`;
       
-      if(currentUserData.preferences){
+      if (currentUserData.preferences) {
         document.getElementById("preference-sexe").value = currentUserData.preferences.meetingSex || "";
         document.getElementById("age-min").value = currentUserData.preferences.ageMin || 18;
         document.getElementById("age-max").value = currentUserData.preferences.ageMax || 100;
@@ -136,7 +134,7 @@ auth.onAuthStateChanged(async (user) => {
       }
       
       // Si la section Speed Dating est active, inscrire l'utilisateur
-      if(document.getElementById("speed-dating-section").classList.contains("active")) {
+      if (document.getElementById("speed-dating-section").classList.contains("active")) {
          await addToWaitingList();
       }
     }
@@ -151,12 +149,12 @@ document.getElementById("save-preferences").addEventListener("click", async () =
   const ageMin = parseInt(document.getElementById("age-min").value);
   const ageMax = parseInt(document.getElementById("age-max").value);
   const distance = document.getElementById("distance").value;
-  if(ageMin < 18 || ageMax > 100 || ageMin >= ageMax){
+  if (ageMin < 18 || ageMax > 100 || ageMin >= ageMax) {
     showModal("La tranche d'âge doit être comprise entre 18 et 100 ans, et l'âge minimum doit être inférieur à l'âge maximum.", null, null, true);
     return;
   }
   const user = auth.currentUser;
-  if(user){
+  if (user) {
     const userDocRef = doc(db, "users", user.uid);
     await setDoc(userDocRef, {
       preferences: {
@@ -168,7 +166,7 @@ document.getElementById("save-preferences").addEventListener("click", async () =
     }, { merge: true });
     showModal("Préférences sauvegardées !", null, null, true);
     // Si l'utilisateur est déjà en attente, mettre à jour son inscription
-    if(waitingActive) {
+    if (waitingActive) {
       await addToWaitingList();
     }
   }
@@ -182,10 +180,10 @@ const modalMessage = document.getElementById("modal-message");
 const modalConfirm = document.getElementById("modal-confirm");
 const modalCancel = document.getElementById("modal-cancel");
 
-function showModal(message, onConfirm, onCancel, isAlert=false) {
+function showModal(message, onConfirm, onCancel, isAlert = false) {
   modalMessage.textContent = message;
   modal.style.display = "flex";
-  if(isAlert){
+  if (isAlert) {
     modalConfirm.style.display = "none";
     modalCancel.textContent = "Ok";
   } else {
@@ -193,11 +191,11 @@ function showModal(message, onConfirm, onCancel, isAlert=false) {
   }
   modalConfirm.onclick = () => {
     modal.style.display = "none";
-    if(onConfirm) onConfirm();
+    if (onConfirm) onConfirm();
   };
   modalCancel.onclick = () => {
     modal.style.display = "none";
-    if(onCancel) onCancel();
+    if (onCancel) onCancel();
   };
 }
 
@@ -228,7 +226,7 @@ onSnapshot(collection(db, "waiting"), (snapshot) => {
   }
 });
 
-function updateWaitingCount(){
+function updateWaitingCount() {
   waitingCountSpan.textContent = waitingCount;
 }
 
@@ -296,7 +294,7 @@ async function attemptMatching(waitingDocs) {
 // ---------------------------
 // Gestion du chat en Speed Dating
 // ---------------------------
-function startChat(){
+function startChat() {
   waitingScreen.style.display = "none";
   chatContainer.style.display = "block";
   timeLeft = 540; // réinitialiser le timer à 9 minutes
@@ -304,20 +302,20 @@ function startChat(){
   timerInterval = setInterval(() => {
     timeLeft--;
     updateChatTimer();
-    if(timeLeft <= 0){
+    if (timeLeft <= 0) {
       clearInterval(timerInterval);
       promptProlongation();
     }
   }, 1000);
 }
 
-function updateChatTimer(){
+function updateChatTimer() {
   let minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
   let seconds = (timeLeft % 60).toString().padStart(2, '0');
   chatTimer.textContent = `${minutes}:${seconds}`;
 }
 
-function promptProlongation(){
+function promptProlongation() {
   showModal("Voulez-vous prolonger la rencontre ?", () => {
     transferChatToDiscussions();
   }, () => {
@@ -327,7 +325,7 @@ function promptProlongation(){
   });
 }
 
-function transferChatToDiscussions(){
+function transferChatToDiscussions() {
   const discussionsList = document.getElementById("discussions-list");
   const discussionDiv = document.createElement("div");
   discussionDiv.classList.add("discussion");
@@ -346,7 +344,7 @@ function transferChatToDiscussions(){
 // Gestion de l'envoi des messages (sans réponse automatique)
 sendMessageBtn.addEventListener("click", () => {
   const message = chatInput.value.trim();
-  if(message){
+  if (message) {
     const msgDiv = document.createElement("div");
     msgDiv.classList.add("chat-message", "self");
     const senderSpan = document.createElement("span");
