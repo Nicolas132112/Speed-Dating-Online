@@ -95,8 +95,7 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   const password = document.getElementById("password").value;
   const username = document.getElementById("username").value;
   const prenom = document.getElementById("prenom").value;
-  // Convertir le sexe en minuscules
-  const sexe = document.getElementById("sexe").value.toLowerCase();
+  const sexe = document.getElementById("sexe").value.toLowerCase(); 
   const codePostal = document.getElementById("code-postal").value;
   const ville = document.getElementById("ville").value;
 
@@ -120,7 +119,6 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
-    // Sauvegarde des infos de base dans Firestore
     await setDoc(doc(db, "users", user.uid), {
       email,
       username,
@@ -148,7 +146,6 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
 document.getElementById("login").addEventListener("click", async () => {
   const email = document.getElementById("email-login").value;
   const password = document.getElementById("password-login").value;
-
   try {
     await signInWithEmailAndPassword(auth, email, password);
     alert("Connexion réussie !");

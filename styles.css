@@ -1,37 +1,130 @@
 /* -----------------------
    Réinitialisation de base
 ------------------------ */
-html, body {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
-  height: 100%;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
 }
 
-/* Corps de la page */
 body {
-  background: linear-gradient(120deg, #ff78a4 0%, #ffa84d 50%, #a84cff 100%);
-  color: #fff;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(120deg, #ff78a4, #ffa84d, #a84cff);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  color: #333;
+  line-height: 1.6;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Container (pages de connexion/inscription) */
 .container {
-  width: 100%;
   max-width: 400px;
-  margin: 20px auto;
+  margin: 50px auto;
   padding: 20px;
   text-align: center;
 }
 
 /* Cartes */
 .card {
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.8);
   padding: 30px 20px;
   margin: 20px 0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* Menu d'inscription plus beau */
+.signup-card {
+  background: #ffe5e5;
+  border: 1px solid #ffcccc;
+  max-width: 500px;
+  margin: 20px auto;
+}
+
+.signup-card h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #e53e3e;
+  font-size: 1.8rem;
+}
+
+.signup-row {
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 80%;
+  margin: 0 auto 15px auto;
+}
+
+.signup-row label {
+  font-weight: bold;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.signup-row input,
+.signup-row select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.dob-container {
+  display: flex;
+  gap: 5px;
+}
+
+.dob-container select {
+  width: 60px;
+  text-align: center;
+}
+
+#age-confirmation {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.signup-btn {
+  width: 80%;
+  background-color: #ff4d4d;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: block;
+  margin: 20px auto;
+}
+
+.signup-btn:hover {
+  background-color: #e53e3e;
+}
+
+.toggle-form {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.toggle-form a {
+  color: #e53e3e;
+  text-decoration: none;
+}
+.toggle-form a:hover {
+  text-decoration: underline;
 }
 
 /* En-tête (app) */
@@ -40,24 +133,24 @@ header {
   top: 0;
   left: 0;
   right: 0;
-  background: none;
-  padding: 10px;
+  background: rgba(255,255,255,0.9);
+  padding: 10px 20px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   z-index: 1000;
 }
 
-/* Icône menu */
 .menu-icon {
-  font-size: 24px;
+  font-size: 28px;
   cursor: pointer;
-  margin-right: 10px;
+  user-select: none;
 }
 
-/* Petit logo dans l'en-tête */
 .header-logo .logo-small {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: auto;
 }
 
 /* Menu latéral */
@@ -67,10 +160,10 @@ header {
   left: -250px;
   width: 250px;
   height: 100%;
-  background: rgba(0,0,0,0.8);
-  padding-top: 60px;
-  transition: left 0.3s;
-  z-index: 999;
+  background: rgba(0,0,0,0.85);
+  padding-top: 70px;
+  transition: left 0.3s ease;
+  z-index: 1100;
 }
 .sidebar.active {
   left: 0;
@@ -78,28 +171,55 @@ header {
 .sidebar ul {
   list-style: none;
   padding: 0;
+  text-align: center;
 }
 .sidebar ul li {
   margin: 20px 0;
-  text-align: center;
 }
 .sidebar ul li a {
   color: #fff;
-  text-decoration: none;
   font-size: 18px;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.sidebar ul li a:hover {
+  color: #ffd700;
 }
 
 /* Contenu principal */
 main {
-  margin-top: 60px;
+  margin: 80px auto 20px;
+  max-width: 960px;
   padding: 20px;
-  text-align: center;
 }
+
+/* Sections masquées par défaut */
 .section {
   display: none;
+  animation: fadeIn 0.5s ease-in;
 }
 .section.active {
   display: block;
+}
+
+/* Pour la section Contact, on veut un layout flex quand elle est active */
+#contact-section.section.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* H2 */
+h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #222;
 }
 
 /* Logo (page de connexion) */
@@ -112,76 +232,79 @@ main {
   margin: 0 auto;
 }
 
-/* Inputs et selects */
-input, select {
-  width: 80%;
-  margin: 8px auto;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  background-color: #f0f0f0;
-  color: #000;
-  font-size: 16px;
+/* Formulaires et inputs (connexion) */
+input, select, textarea {
+  width: 90%;
+  margin: 10px auto;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
   text-align: center;
+}
+input:focus, select:focus, textarea:focus {
   outline: none;
+  border-color: #ff4d4d;
 }
 ::placeholder {
-  color: #999;
+  color: #888;
 }
 
-/* Boutons */
+/* Boutons (connexion) */
 button {
-  width: 80%;
-  margin: 16px auto;
+  width: 90%;
+  margin: 20px auto;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
   background-color: #ff4d4d;
   color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 16px;
+  font-size: 1.1rem;
   cursor: pointer;
+  transition: background-color 0.3s;
   display: block;
-  transition: background-color 0.3s, opacity 0.3s;
 }
 button:hover {
   background-color: #e53e3e;
-  opacity: 0.9;
 }
 
 /* Section Profil */
 .profile-info p {
   margin: 5px 0;
+  font-size: 1.1rem;
 }
-.preferences {
-  margin: 20px 0;
+.preferences, .options {
+  margin: 20px auto;
+  max-width: 600px;
+  background: rgba(255,255,255,0.9);
+  padding: 20px;
+  border-radius: 10px;
 }
-.age-range-container input {
-  width: 35%;
-  padding: 8px;
-  margin: 5px;
-  border-radius: 5px;
-  border: none;
-  text-align: center;
-  background-color: #f0f0f0;
-  color: #000;
-}
-.select-colored {
-  background-color: #ff4d4d;
-  color: #fff;
-  font-weight: bold;
+.age-range-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 
-/* Speed Dating */
+/* Waiting screen */
 .waiting-screen {
-  text-align: center;
-  padding: 20px;
+  background: rgba(255,255,255,0.95);
+  padding: 30px;
+  border-radius: 10px;
+  margin-bottom: 20px;
 }
+.waiting-screen p {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+/* Loader */
 .loader {
-  border: 8px solid #f3f3f3;
+  border: 8px solid #ddd;
   border-top: 8px solid #ff4d4d;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   margin: 20px auto;
   animation: spin 2s linear infinite;
 }
@@ -189,55 +312,54 @@ button:hover {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Chat */
 .chat-container {
-  background: rgba(0,0,0,0.3);
-  padding: 10px;
+  background: rgba(255,255,255,0.95);
+  padding: 15px;
   border-radius: 10px;
-  text-align: left;
-  margin: auto;
-  max-width: 500px;
+  max-width: 600px;
+  margin: 20px auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 10px;
 }
 .chat-window {
-  border: 1px solid rgba(255,255,255,0.3);
-  height: 200px;
+  border: 1px solid #ccc;
+  height: 250px;
   overflow-y: auto;
-  margin: 10px 0;
   padding: 10px;
-  background: rgba(255,255,255,0.1);
+  background: #fff;
+  border-radius: 5px;
+  margin-bottom: 10px;
 }
 .chat-message {
-  margin: 5px 0;
-  padding: 5px 10px;
-  border-radius: 5px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 15px;
   max-width: 80%;
+  word-wrap: break-word;
 }
 .chat-message.self {
-  background: rgba(255, 182, 193, 0.8);
-  align-self: flex-end;
+  background: #ffcccc;
+  margin-left: auto;
   text-align: right;
 }
 .chat-message.other {
-  background: rgba(173, 216, 230, 0.8);
-  align-self: flex-start;
+  background: #cce5ff;
+  margin-right: auto;
   text-align: left;
 }
 .chat-input {
   display: flex;
-  gap: 5px;
+  gap: 10px;
 }
 .chat-input input {
   flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  background-color: #f0f0f0;
-  color: #000;
 }
 
 /* Modal */
@@ -251,19 +373,58 @@ button:hover {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 2000;
 }
 .modal-content {
   background: #fff;
-  color: #000;
   padding: 20px;
   border-radius: 10px;
+  max-width: 400px;
+  width: 90%;
   text-align: center;
 }
 .modal-buttons {
   margin-top: 20px;
+  display: flex;
+  justify-content: space-around;
 }
-.modal-buttons button {
-  width: 40%;
-  margin: 0 5%;
+
+/* Dark Mode */
+.dark-mode {
+  background: #222 !important;
+  color: #ddd !important;
+}
+.dark-mode header {
+  background: #333 !important;
+}
+.dark-mode .sidebar {
+  background: #000 !important;
+}
+.dark-mode .card, 
+.dark-mode .preferences, 
+.dark-mode .options, 
+.dark-mode .waiting-screen, 
+.dark-mode .chat-container {
+  background: #333 !important;
+  color: #ddd !important;
+}
+.dark-mode input,
+.dark-mode select,
+.dark-mode textarea,
+.dark-mode button {
+  background-color: #555 !important;
+  color: #ddd !important;
+  border-color: #777 !important;
+}
+.dark-mode .modal-content {
+  background: #444 !important;
+  color: #fff !important;
+}
+
+/* Alignement "Mode sombre" sur une ligne */
+.dark-mode-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }

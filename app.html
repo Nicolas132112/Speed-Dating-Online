@@ -22,6 +22,8 @@
       <li><a href="#" data-section="profil">Profil</a></li>
       <li><a href="#" data-section="speed-dating">Speed Dating</a></li>
       <li><a href="#" data-section="discussions">Discussions</a></li>
+      <li><a href="#" data-section="options">Options</a></li>
+      <li><a href="#" data-section="contact">Contact</a></li>
       <li><a href="#" id="logout">Déconnexion</a></li>
     </ul>
   </nav>
@@ -73,7 +75,7 @@
     <!-- Speed Dating -->
     <section id="speed-dating-section" class="section">
       <h2>Speed Dating</h2>
-      <!-- Écran d'attente avec chargement dynamique -->
+      <!-- Écran d'attente -->
       <div id="waiting-screen" class="waiting-screen">
         <p>En attente d'une correspondance...</p>
         <p>Personnes en attente: <span id="waiting-count">0</span></p>
@@ -101,9 +103,47 @@
         <!-- Les conversations sauvegardées apparaîtront ici -->
       </div>
     </section>
+
+    <!-- Options -->
+    <section id="options-section" class="section">
+      <h2>Options</h2>
+      <div class="options">
+        <h3>Langue</h3>
+        <label id="languageLabel">Français</label>
+        <h3>Thème</h3>
+        <div class="dark-mode-toggle-container">
+          <label>
+            <input type="checkbox" id="dark-mode-toggle">
+            <span id="darkModeLabel">Mode sombre</span>
+          </label>
+        </div>
+        <h3>Supprimer mon compte</h3>
+        <p id="deleteAccountInfo">
+          Pour supprimer votre compte, tapez <strong>supprimer</strong> ci-dessous et confirmez :
+        </p>
+        <input type="text" id="delete-confirm" placeholder="Tapez 'supprimer'">
+        <button id="delete-account-btn">Supprimer mon compte</button>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact-section" class="section">
+      <h2>Contact</h2>
+      <p id="contactInfo">
+        Le site est en phase de développement. Merci de votre compréhension.
+        N'hésitez pas à nous faire part de vos remarques et à signaler d'éventuels problèmes.
+      </p>
+      <form action="https://formspree.io/f/xjkglkqo" method="POST" id="contact-form">
+        <label for="contact-subject" id="contactSubjectLabel">Sujet :</label>
+        <input type="text" id="contact-subject" name="subject" placeholder="Sujet" required>
+        <label for="contact-message" id="contactMessageLabel">Message :</label>
+        <textarea id="contact-message" name="message" placeholder="Votre message..." required></textarea>
+        <button type="submit" id="sendButton">Envoyer</button>
+      </form>
+    </section>
   </main>
   
-  <!-- Modal custom pour les pop-ups -->
+  <!-- Modal custom -->
   <div id="custom-modal" class="modal" style="display:none;">
     <div class="modal-content">
       <p id="modal-message"></p>

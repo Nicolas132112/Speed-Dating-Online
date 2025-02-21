@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion - Speed Dating App</title>
+  <!-- Pas de favicon pour éviter l'erreur 404 -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -22,34 +23,68 @@
       <p>Pas de compte ? <a href="#" id="show-signup">Créer un compte</a></p>
     </div>
 
-    <!-- Inscription -->
-    <div id="signup-container" class="card" style="display:none;">
+    <!-- Inscription (améliorée) -->
+    <div id="signup-container" class="card signup-card" style="display:none;">
       <h2>Créer un compte</h2>
-      <input type="email" id="email" placeholder="Email">
-      <input type="password" id="password" placeholder="Mot de passe">
-      <input type="text" id="username" placeholder="Nom d'utilisateur">
-      <input type="text" id="prenom" placeholder="Prénom">
-      <label for="sexe">Sexe :</label>
-      <select id="sexe">
-        <option value="homme">Homme</option>
-        <option value="femme">Femme</option>
-        <option value="autre">Autre</option>
-      </select>
-      <label>Date de naissance :</label>
-      <div class="dob-container">
-        <select id="jour"></select>
-        <select id="mois"></select>
-        <select id="annee"></select>
+      
+      <div class="signup-row">
+        <label for="email">Adresse email</label>
+        <input type="email" id="email" placeholder="votre@email">
       </div>
-      <p id="age-confirmation"></p>
-      <input type="text" id="code-postal" placeholder="Code postal">
-      <select id="ville">
-        <option value="">Sélectionnez une ville</option>
-      </select>
-      <button id="signup-btn">Créer un compte</button>
-      <p>Déjà un compte ? <a href="#" id="show-login">Se connecter</a></p>
+
+      <div class="signup-row">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" placeholder="Au moins 6 caractères">
+      </div>
+
+      <div class="signup-row">
+        <label for="username">Nom d'utilisateur</label>
+        <input type="text" id="username" placeholder="Ex : Speedy123">
+      </div>
+
+      <div class="signup-row">
+        <label for="prenom">Prénom</label>
+        <input type="text" id="prenom" placeholder="Votre prénom">
+      </div>
+
+      <div class="signup-row">
+        <label for="sexe">Sexe</label>
+        <select id="sexe">
+          <option value="homme">Homme</option>
+          <option value="femme">Femme</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+
+      <div class="signup-row">
+        <label>Date de naissance</label>
+        <div class="dob-container">
+          <select id="jour"></select>
+          <select id="mois"></select>
+          <select id="annee"></select>
+        </div>
+        <p id="age-confirmation"></p>
+      </div>
+
+      <div class="signup-row">
+        <label for="code-postal">Code postal</label>
+        <input type="text" id="code-postal" placeholder="Ex : 75001">
+      </div>
+
+      <div class="signup-row">
+        <label for="ville">Ville</label>
+        <select id="ville">
+          <option value="">Sélectionnez une ville</option>
+        </select>
+      </div>
+
+      <button id="signup-btn" class="signup-btn">Créer un compte</button>
+      <p class="toggle-form">
+        Déjà un compte ? <a href="#" id="show-login">Se connecter</a>
+      </p>
     </div>
   </div>
+
   <script type="module" src="firebase-config.js"></script>
   <script type="module" src="index.js"></script>
 </body>

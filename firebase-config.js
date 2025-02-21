@@ -21,14 +21,14 @@ import {
   getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-storage.js";
 
-// Remplacez ces valeurs par celles de votre propre configuration Firebase
+// Veillez à bien mettre VOTRE clé d'API ici :
 const firebaseConfig = {
-  apiKey: "XXX-XXX",
-  authDomain: "votre-projet.firebaseapp.com",
-  projectId: "votre-projet",
-  storageBucket: "votre-projet.appspot.com",
-  messagingSenderId: "1234567890",
-  appId: "1:1234567890:web:abc123"
+  apiKey: "AIzaSyDrA7vok6bdGcs-cUnK_yKG9tdsW4lFQWw", // <--- IMPORTANT : Mettez la vraie clé depuis votre console Firebase
+  authDomain: "speeddatingapp-e7691.firebaseapp.com",
+  projectId: "speeddatingapp-e7691",
+  storageBucket: "speeddatingapp-e7691.appspot.com",
+  messagingSenderId: "219890594231",
+  appId: "1:219890594231"
 };
 
 const app = initializeApp(firebaseConfig);

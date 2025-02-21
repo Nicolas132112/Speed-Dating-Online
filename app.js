@@ -22,16 +22,36 @@ let currentUserData = null;
 let waitingActive = false; // indique si l'utilisateur est dans la waiting list
 
 // ---------------------------
+// Gestion du dark mode
+// ---------------------------
+const darkModeToggle = document.getElementById("dark-mode-toggle");
+window.addEventListener("load", () => {
+  const savedDark = localStorage.getItem("darkMode") === "true";
+  darkModeToggle.checked = savedDark;
+  if (savedDark) {
+    document.body.classList.add("dark-mode");
+  }
+});
+darkModeToggle.addEventListener("change", (e) => {
+  if(e.target.checked){
+    document.body.classList.add("dark-mode");
+    localStorage.setItem("darkMode", "true");
+  } else {
+    document.body.classList.remove("dark-mode");
+    localStorage.setItem("darkMode", "false");
+  }
+});
+
+// ---------------------------
 // Menu et navigation
 // ---------------------------
-const menuToggle = document.getElementById("menu-toggle");
-const sidebar = document.getElementById("sidebar");
-menuToggle.addEventListener("click", () => {
-  sidebar.classList.toggle("active");
+const menuToggleEl = document.getElementById("menu-toggle");
+const sidebarEl = document.getElementById("sidebar");
+menuToggleEl.addEventListener("click", () => {
+  sidebarEl.classList.toggle("active");
 });
 
 const sections = document.querySelectorAll(".section");
-// Dès qu'on quitte la section "speed-dating", on retire l'utilisateur de la waiting list
 document.querySelectorAll("#sidebar ul li a").forEach(link => {
   link.addEventListener("click", async (e) => {
     e.preventDefault();
@@ -42,8 +62,7 @@ document.querySelectorAll("#sidebar ul li a").forEach(link => {
     }
     sections.forEach(sec => sec.classList.remove("active"));
     document.getElementById(target + "-section").classList.add("active");
-    sidebar.classList.remove("active");
-    // Si on va sur "speed-dating", ajouter l'utilisateur dans la waiting list
+    sidebarEl.classList.remove("active");
     if (target === "speed-dating" && auth.currentUser) {
       await addToWaitingList();
     }
@@ -60,9 +79,6 @@ document.getElementById("logout").addEventListener("click", async () => {
   });
 });
 
-// ---------------------------
-// Gestion automatique si fermeture/refresh
-// ---------------------------
 window.addEventListener("beforeunload", async () => {
   if (auth.currentUser && waitingActive) {
     await removeFromWaitingList();
@@ -75,7 +91,6 @@ window.addEventListener("beforeunload", async () => {
 async function addToWaitingList() {
   const user = auth.currentUser;
   if (!user || waitingActive) return;
-  // Charger currentUserData si nécessaire
   if (!currentUserData) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
@@ -86,7 +101,6 @@ async function addToWaitingList() {
       return;
     }
   }
-  // Inscription dans la collection "waiting"
   await setDoc(doc(db, "waiting", user.uid), {
     uid: user.uid,
     timestamp: Date.now(),
@@ -132,7 +146,6 @@ auth.onAuthStateChanged(async (user) => {
         document.getElementById("distance").value = currentUserData.preferences.distance || "monpays";
       }
       
-      // Si la section Speed Dating est active, inscrire l'utilisateur
       if (document.getElementById("speed-dating-section").classList.contains("active")) {
          await addToWaitingList();
       }
@@ -155,7 +168,6 @@ document.getElementById("save-preferences").addEventListener("click", async () =
   const user = auth.currentUser;
   if (user) {
     const userDocRef = doc(db, "users", user.uid);
-    // Mettre à jour Firestore
     await setDoc(userDocRef, {
       preferences: {
         meetingSex,
@@ -164,10 +176,8 @@ document.getElementById("save-preferences").addEventListener("click", async () =
         distance
       }
     }, { merge: true });
-    // Mettre à jour localement
     currentUserData.preferences = { meetingSex, ageMin, ageMax, distance };
     showModal("Préférences sauvegardées !", null, null, true);
-    // Réinscrire l'utilisateur dans la waiting list avec les nouvelles prefs
     if (waitingActive) {
       await removeFromWaitingList();
       await addToWaitingList();
@@ -176,31 +186,23 @@ document.getElementById("save-preferences").addEventListener("click", async () =
 });
 
 // ---------------------------
-// Modal custom (pour les pop-ups de l'appli)
+// Options : Suppression de compte
 // ---------------------------
-const modal = document.getElementById("custom-modal");
-const modalMessage = document.getElementById("modal-message");
-const modalConfirm = document.getElementById("modal-confirm");
-const modalCancel = document.getElementById("modal-cancel");
-
-function showModal(message, onConfirm, onCancel, isAlert = false) {
-  modalMessage.textContent = message;
-  modal.style.display = "flex";
-  if (isAlert) {
-    modalConfirm.style.display = "none";
-    modalCancel.textContent = "Ok";
-  } else {
-    modalConfirm.style.display = "inline-block";
+document.getElementById("delete-account-btn").addEventListener("click", async () => {
+  const confirmation = document.getElementById("delete-confirm").value.trim().toLowerCase();
+  if(confirmation !== "supprimer" && confirmation !== "delete" && confirmation !== "eliminar"){
+    alert("Veuillez taper la confirmation exacte pour supprimer votre compte.");
+    return;
   }
-  modalConfirm.onclick = () => {
-    modal.style.display = "none";
-    if (onConfirm) onConfirm();
-  };
-  modalCancel.onclick = () => {
-    modal.style.display = "none";
-    if (onCancel) onCancel();
-  };
-}
+  try {
+    await auth.currentUser.delete();
+    alert("Votre compte a été supprimé.");
+    window.location.href = "index.html";
+  } catch (error) {
+    console.error("Erreur lors de la suppression du compte :", error);
+    alert("Erreur lors de la suppression de votre compte. Veuillez réessayer.");
+  }
+});
 
 // ---------------------------
 // Gestion du Speed Dating et Matching
@@ -214,12 +216,11 @@ const prolongerBtn = document.getElementById("prolonger-btn");
 const chatTimer = document.getElementById("chat-timer");
 
 let timerInterval;
-let timeLeft = 540; // 9 minutes en secondes
+let timeLeft = 540;
 
 let waitingCount = 0;
 const waitingCountSpan = document.getElementById("waiting-count");
 
-// Surveille en temps réel la collection "waiting"
 onSnapshot(collection(db, "waiting"), (snapshot) => {
   waitingCount = snapshot.size;
   updateWaitingCount();
@@ -233,30 +234,24 @@ function updateWaitingCount() {
   waitingCountSpan.textContent = waitingCount;
 }
 
-// Fonction de matching basée sur les critères réciproques
 async function attemptMatching(waitingDocs) {
   const user = auth.currentUser;
   if (!user || !currentUserData) return;
-  // Vérifier que l'utilisateur courant est dans la waiting list
   const currentDoc = waitingDocs.find(doc => doc.data().uid === user.uid);
   if (!currentDoc) return;
   
-  // Préférences de l'utilisateur courant
   const { ageMin: userMin = 18, ageMax: userMax = 100, meetingSex: userMeetingSex = "les-deux" } = currentUserData.preferences || {};
   const userAge = currentUserData.age;
   const userSex = (currentUserData.sexe || "").toLowerCase();
   
-  // Parcourir les autres utilisateurs dans la waiting list
   for (const docSnapshot of waitingDocs) {
     const candidateData = docSnapshot.data();
-    if (candidateData.uid === user.uid) continue; // Ignorer soi-même
+    if (candidateData.uid === user.uid) continue;
     
-    // Préférences du candidat
     const { ageMin: candMin = 18, ageMax: candMax = 100, meetingSex: candMeetingSex = "les-deux" } = candidateData.preferences || {};
     const candidateAge = candidateData.age;
     const candidateSex = (candidateData.sexe || "").toLowerCase();
     
-    // Vérification double
     const candidateMatchesUser = (candidateAge >= userMin && candidateAge <= userMax) &&
       (userMeetingSex === "les-deux" || candidateSex === userMeetingSex);
     const userMatchesCandidate = (userAge >= candMin && userAge <= candMax) &&
@@ -268,7 +263,6 @@ async function attemptMatching(waitingDocs) {
     
     if (candidateMatchesUser && userMatchesCandidate) {
       console.log("Match trouvé entre", user.uid, "et", candidateData.uid);
-      // Retirer les deux de la waiting list et démarrer le chat
       await deleteDoc(doc(db, "waiting", candidateData.uid));
       await deleteDoc(doc(db, "waiting", user.uid));
       waitingActive = false;
@@ -278,13 +272,10 @@ async function attemptMatching(waitingDocs) {
   }
 }
 
-// ---------------------------
-// Démarrage du chat
-// ---------------------------
 function startChat() {
   waitingScreen.style.display = "none";
   chatContainer.style.display = "block";
-  timeLeft = 540; // 9 minutes
+  timeLeft = 540;
   updateChatTimer();
   timerInterval = setInterval(() => {
     timeLeft--;
@@ -328,7 +319,6 @@ function transferChatToDiscussions() {
   chatContainer.style.display = "none";
 }
 
-// Envoi de messages
 sendMessageBtn.addEventListener("click", () => {
   const message = chatInput.value.trim();
   if (message) {
@@ -351,3 +341,29 @@ prolongerBtn.addEventListener("click", () => {
   clearInterval(timerInterval);
   promptProlongation();
 });
+
+// ---------------------------
+// Fonction utilitaire d'affichage de modal
+function showModal(message, onConfirm, onCancel, isAlert = false) {
+  const modal = document.getElementById("custom-modal");
+  const modalMessage = document.getElementById("modal-message");
+  const modalConfirm = document.getElementById("modal-confirm");
+  const modalCancel = document.getElementById("modal-cancel");
+  
+  modalMessage.textContent = message;
+  modal.style.display = "flex";
+  if (isAlert) {
+    modalConfirm.style.display = "none";
+    modalCancel.textContent = "Ok";
+  } else {
+    modalConfirm.style.display = "inline-block";
+  }
+  modalConfirm.onclick = () => {
+    modal.style.display = "none";
+    if (onConfirm) onConfirm();
+  };
+  modalCancel.onclick = () => {
+    modal.style.display = "none";
+    if (onCancel) onCancel();
+  };
+}
