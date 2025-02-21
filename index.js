@@ -94,7 +94,7 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
   const prenom = document.getElementById("prenom").value;
-  const sexe = document.getElementById("sexe").value.toLowerCase(); 
+  const sexe = document.getElementById("sexe").value.toLowerCase();
   const codePostal = document.getElementById("code-postal").value;
   const ville = document.getElementById("ville").value;
 
@@ -118,6 +118,7 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    // On supprime toute référence à pseudo/username
     await setDoc(doc(db, "users", user.uid), {
       email,
       prenom,

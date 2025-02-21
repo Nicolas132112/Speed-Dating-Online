@@ -20,11 +20,12 @@ import { deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0
 
 // Variables globales
 let currentUserData = null;
-let waitingActive = false; // indique si l'utilisateur est dans la waiting list
+let waitingActive = false;
 let currentConversationId = null;
 let messagesListenerUnsubscribe = null;
+let requestsProlongUnsubscribe = null;
 
-// Fonction pour générer un identifiant de conversation unique (tri lexicographique)
+// Fonction pour générer un identifiant de conversation unique
 function getConversationId(u1, u2) {
   return [u1, u2].sort().join("_");
 }
@@ -41,7 +42,7 @@ window.addEventListener("load", () => {
   }
 });
 darkModeToggle.addEventListener("change", (e) => {
-  if(e.target.checked){
+  if (e.target.checked) {
     document.body.classList.add("dark-mode");
     localStorage.setItem("darkMode", "true");
   } else {
@@ -102,7 +103,7 @@ async function addToWaitingList() {
   if (!currentUserData) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()){
+    if (userDoc.exists()) {
       currentUserData = userDoc.data();
     } else {
       console.error("Données utilisateur introuvables");
@@ -140,7 +141,7 @@ auth.onAuthStateChanged(async (user) => {
   if (user) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()){
+    if (userDoc.exists()) {
       currentUserData = userDoc.data();
       document.getElementById("display-prenom").textContent = `Prénom: ${currentUserData.prenom}`;
       document.getElementById("display-age").textContent = `Âge: ${currentUserData.age}`;
@@ -198,7 +199,7 @@ document.getElementById("save-preferences").addEventListener("click", async () =
 // ---------------------------
 document.getElementById("delete-account-btn").addEventListener("click", async () => {
   const confirmation = document.getElementById("delete-confirm").value.trim().toLowerCase();
-  if(confirmation !== "supprimer" && confirmation !== "delete" && confirmation !== "eliminar"){
+  if (confirmation !== "supprimer" && confirmation !== "delete" && confirmation !== "eliminar") {
     alert("Veuillez taper la confirmation exacte pour supprimer votre compte.");
     return;
   }
@@ -213,15 +214,17 @@ document.getElementById("delete-account-btn").addEventListener("click", async ()
 });
 
 // ---------------------------
-// Gestion des conversations pour Speed Dating
+// Gestion du Speed Dating et du chat
 // ---------------------------
 const waitingScreen = document.getElementById("waiting-screen");
 const chatContainer = document.getElementById("chat-container");
 const chatWindow = document.getElementById("chat-window");
 const chatInput = document.getElementById("chat-input");
 const sendMessageBtn = document.getElementById("send-message");
-const prolongerBtn = document.getElementById("prolonger-btn");
+const prolongerCheckbox = document.getElementById("prolonger-checkbox");
+const prolongerLabel = document.getElementById("prolonger-label");
 const chatTimer = document.getElementById("chat-timer");
+const prolongerBtn = document.getElementById("prolonger-btn"); // s'il est présent dans HTML, même caché
 
 let timerInterval;
 let timeLeft = 540;
@@ -229,7 +232,7 @@ let timeLeft = 540;
 let waitingCount = 0;
 const waitingCountSpan = document.getElementById("waiting-count");
 
-// Démarrer le chat pour la conversation donnée
+// Démarrer la conversation
 function startChat(conversationId) {
   currentConversationId = conversationId;
   waitingScreen.style.display = "none";
@@ -238,11 +241,15 @@ function startChat(conversationId) {
   timeLeft = 540;
   updateChatTimer();
 
-  // Si on écoutait déjà une autre conversation, on arrête
+  // Réinitialiser la checkbox prolonger
+  prolongerCheckbox.checked = false;
+  prolongerCheckbox.disabled = false;
+  prolongerLabel.textContent = "Prolonger";
+
+  // Écoute messages
   if (messagesListenerUnsubscribe) {
     messagesListenerUnsubscribe();
   }
-  // Écoute en temps réel des messages de la conversation
   messagesListenerUnsubscribe = onSnapshot(
     collection(db, "conversations", currentConversationId, "messages"),
     (snapshot) => {
@@ -253,7 +260,7 @@ function startChat(conversationId) {
         msgDiv.classList.add("chat-message", data.sender === auth.currentUser.uid ? "self" : "other");
         const senderSpan = document.createElement("span");
         senderSpan.classList.add("sender");
-        senderSpan.textContent = data.sender === auth.currentUser.uid ? "Moi" : "L'autre";
+        senderSpan.textContent = (data.sender === auth.currentUser.uid) ? "Moi" : (data.senderPrenom || "L'autre");
         const textP = document.createElement("p");
         textP.textContent = data.text;
         msgDiv.appendChild(senderSpan);
@@ -264,6 +271,27 @@ function startChat(conversationId) {
     }
   );
 
+  // Écoute requestsProlong
+  if (requestsProlongUnsubscribe) {
+    requestsProlongUnsubscribe();
+  }
+  const convRef = doc(db, "conversations", currentConversationId);
+  requestsProlongUnsubscribe = onSnapshot(convRef, (docSnap) => {
+    if (!docSnap.exists()) return;
+    const data = docSnap.data();
+    if (!data.requestsProlong) return;
+    const requests = data.requestsProlong;
+    let countTrue = 0;
+    for (let uid in requests) {
+      if (requests[uid]) countTrue++;
+    }
+    if (countTrue >= 2) {
+      // Les deux ont coché => on transfère
+      transferChatToDiscussions();
+    }
+  });
+
+  // Timer
   timerInterval = setInterval(() => {
     timeLeft--;
     updateChatTimer();
@@ -280,17 +308,66 @@ function updateChatTimer() {
   chatTimer.textContent = `${minutes}:${seconds}`;
 }
 
-// Proposer de prolonger la rencontre
+// Quand on coche prolonger
+prolongerCheckbox.addEventListener("change", async (e) => {
+  if (e.target.checked) {
+    prolongerCheckbox.disabled = true;
+    prolongerLabel.textContent = "Prolongation demandée";
+    const myPrenom = currentUserData.prenom || "Quelqu'un";
+    // Envoyer un message "X veut prolonger"
+    await setDoc(
+      doc(collection(db, "conversations", currentConversationId, "messages")),
+      {
+        sender: auth.currentUser.uid,
+        senderPrenom: myPrenom,
+        text: `${myPrenom} veut prolonger la discussion`,
+        timestamp: serverTimestamp()
+      }
+    );
+    // Mettre requestsProlong[uid] = true
+    const convRef = doc(db, "conversations", currentConversationId);
+    await setDoc(convRef, {
+      requestsProlong: {
+        [auth.currentUser.uid]: true
+      }
+    }, { merge: true });
+  }
+});
+
+// Fin du temps
 function promptProlongation() {
-  showModal("Voulez-vous prolonger la rencontre ?", () => {
-    transferChatToDiscussions();
+  showModal("Voulez-vous prolonger la rencontre ?", async () => {
+    // L'utilisateur dit OUI => on coche la checkbox si pas déjà
+    if (!prolongerCheckbox.checked) {
+      prolongerCheckbox.checked = true;
+      prolongerCheckbox.disabled = true;
+      prolongerLabel.textContent = "Prolongation demandée";
+      const myPrenom = currentUserData.prenom || "Quelqu'un";
+      // Envoyer message
+      await setDoc(
+        doc(collection(db, "conversations", currentConversationId, "messages")),
+        {
+          sender: auth.currentUser.uid,
+          senderPrenom: myPrenom,
+          text: `${myPrenom} veut prolonger la discussion`,
+          timestamp: serverTimestamp()
+        }
+      );
+      // Maj Firestore
+      const convRef = doc(db, "conversations", currentConversationId);
+      await setDoc(convRef, {
+        requestsProlong: {
+          [auth.currentUser.uid]: true
+        }
+      }, { merge: true });
+    }
   }, () => {
     showModal("La rencontre est terminée.", null, null, true);
     chatContainer.style.display = "none";
   });
 }
 
-// Ajouter un lien vers la conversation dans "Discussions"
+// Transfert conversation => Discussions
 function transferChatToDiscussions() {
   const discussionsList = document.getElementById("discussions-list");
   const convLink = document.createElement("a");
@@ -310,7 +387,7 @@ function loadConversation(convId) {
   startChat(convId);
 }
 
-// Surveille la waiting list en temps réel
+// Surveille la waiting list
 onSnapshot(collection(db, "waiting"), (snapshot) => {
   waitingCount = snapshot.size;
   updateWaitingCount();
@@ -324,7 +401,7 @@ function updateWaitingCount() {
   waitingCountSpan.textContent = waitingCount;
 }
 
-// Vérifie si deux utilisateurs correspondent et lance le chat
+// Matching
 async function attemptMatching(waitingDocs) {
   const user = auth.currentUser;
   if (!user || !currentUserData) return;
@@ -348,15 +425,9 @@ async function attemptMatching(waitingDocs) {
     const userMatchesCandidate = (userAge >= candMin && userAge <= candMax) &&
       (candMeetingSex === "les-deux" || userSex === candMeetingSex);
     
-    console.log(`Comparaison entre ${user.uid} et ${candidateData.uid}:`);
-    console.log("User recherche :", { userMin, userMax, userMeetingSex }, "→ Candidat:", candidateData);
-    console.log("candidateMatchesUser:", candidateMatchesUser, "userMatchesCandidate:", userMatchesCandidate);
-    
     if (candidateMatchesUser && userMatchesCandidate) {
-      // Générer un identifiant de conversation unique
       const conversationId = getConversationId(user.uid, candidateData.uid);
       console.log("Match trouvé entre", user.uid, "et", candidateData.uid, "-> Conversation:", conversationId);
-
       await deleteDoc(doc(db, "waiting", candidateData.uid));
       await deleteDoc(doc(db, "waiting", user.uid));
       waitingActive = false;
@@ -373,22 +444,23 @@ sendMessageBtn.addEventListener("click", async () => {
     await setDoc(
       doc(collection(db, "conversations", currentConversationId, "messages")),
       {
-         sender: auth.currentUser.uid,
-         text: message,
-         timestamp: serverTimestamp()
+        sender: auth.currentUser.uid,
+        senderPrenom: currentUserData.prenom || "Moi",
+        text: message,
+        timestamp: serverTimestamp()
       }
     );
     chatInput.value = "";
   }
 });
 
+// (Bouton prolonger masqué, si besoin)
 prolongerBtn.addEventListener("click", () => {
   clearInterval(timerInterval);
   promptProlongation();
 });
 
-// ---------------------------
-// Fonction d'affichage de modal
+// Modal
 function showModal(message, onConfirm, onCancel, isAlert = false) {
   const modal = document.getElementById("custom-modal");
   const modalMessage = document.getElementById("modal-message");
@@ -402,6 +474,7 @@ function showModal(message, onConfirm, onCancel, isAlert = false) {
     modalCancel.textContent = "Ok";
   } else {
     modalConfirm.style.display = "inline-block";
+    modalCancel.textContent = "Non";
   }
   modalConfirm.onclick = () => {
     modal.style.display = "none";

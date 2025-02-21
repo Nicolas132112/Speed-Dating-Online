@@ -12,7 +12,7 @@ import {
   getDocs, 
   getDoc,
   query, 
-  where, 
+  where,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 import { 
@@ -23,7 +23,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDrA7vok6bdGcs-cUnK_yKG9tdsW4lFQWw", // Remplacez par votre clé d'API réelle
+  apiKey: "AIzaSyDrA7vok6bdGcs-cUnK_yKG9tdsW4lFQWw", // Remplacez par la vôtre
   authDomain: "speeddatingapp-e7691.firebaseapp.com",
   projectId: "speeddatingapp-e7691",
   storageBucket: "speeddatingapp-e7691.appspot.com",
@@ -48,7 +48,7 @@ export {
   getDocs, 
   getDoc,
   query, 
-  where, 
+  where,
   serverTimestamp,
   ref, 
   uploadBytes, 
