@@ -227,15 +227,13 @@ const chatWindow = document.getElementById("chat-window");
 const chatInput = document.getElementById("chat-input");
 const sendMessageBtn = document.getElementById("send-message");
 const chatTimer = document.getElementById("chat-timer");
-// Nous utilisons la checkbox pour prolonger (prolongerCheckbox) et son label (prolongerLabel)
-// Le bouton prolonger "prolonger-btn" est masqué dans HTML
 
 let timerInterval;
 let timeLeft = 540;
 let waitingCount = 0;
 const waitingCountSpan = document.getElementById("waiting-count");
 
-// Démarrer la conversation
+// Démarrer le chat pour la conversation donnée
 function startChat(conversationId) {
   currentConversationId = conversationId;
   waitingScreen.style.display = "none";
@@ -315,7 +313,6 @@ prolongerCheckbox.addEventListener("change", async (e) => {
     prolongerCheckbox.disabled = true;
     prolongerLabel.textContent = "Prolongation demandée";
     const myPrenom = currentUserData.prenom || "Quelqu'un";
-    // Envoyer un message dans le chat
     await setDoc(
       doc(collection(db, "conversations", currentConversationId, "messages")),
       {
@@ -325,7 +322,6 @@ prolongerCheckbox.addEventListener("change", async (e) => {
         timestamp: serverTimestamp()
       }
     );
-    // Mettre à jour le document conversation
     const convRef = doc(db, "conversations", currentConversationId);
     await setDoc(convRef, {
       requestsProlong: {
@@ -335,7 +331,7 @@ prolongerCheckbox.addEventListener("change", async (e) => {
   }
 });
 
-// Fin du temps : proposer la prolongation via pop-up
+// À la fin du temps, proposer via pop-up
 function promptProlongation() {
   showModal("Voulez-vous prolonger la rencontre ?", async () => {
     if (!prolongerCheckbox.checked) {
@@ -368,15 +364,45 @@ function promptProlongation() {
 // Transfert de la conversation vers la section Discussions
 function transferChatToDiscussions() {
   const discussionsList = document.getElementById("discussions-list");
-  const convLink = document.createElement("a");
-  convLink.href = "#";
-  convLink.textContent = "Reprendre la conversation " + currentConversationId;
-  convLink.style.display = "block";
-  convLink.style.margin = "10px 0";
-  convLink.addEventListener("click", () => {
+  const convBox = document.createElement("div");
+  convBox.classList.add("conversation-box");
+  // Pour afficher le nom et le dernier message, on utilise le doc conversation.
+  // Ici, nous faisons une requête pour obtenir ces informations.
+  getDoc(doc(db, "conversations", currentConversationId)).then((docSnap) => {
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      // Supposons que data.participants est un tableau et data.otherName contient le nom de l'autre
+      const otherName = data.otherName || "Inconnu";
+      const lastMsg = data.lastMessage || { text: "", sender: "", readBy: [] };
+      let statusText = "";
+      if (lastMsg.sender !== auth.currentUser.uid) {
+        if (!lastMsg.readBy || !lastMsg.readBy.includes(auth.currentUser.uid)) {
+          statusText = "Nouveau";
+        } else {
+          statusText = "À vous";
+        }
+      } else {
+        if (lastMsg.readBy && lastMsg.readBy.includes(data.otherUid)) {
+          statusText = "Lu";
+        } else {
+          statusText = "Non lu";
+        }
+      }
+      convBox.innerHTML = `
+        <div class="conversation-header">
+          <span class="conversation-name">${otherName}</span>
+          <span class="conversation-status">${statusText}</span>
+        </div>
+        <div class="conversation-lastmsg">${lastMsg.text}</div>
+      `;
+    } else {
+      convBox.innerHTML = `<div class="conversation-header"><span class="conversation-name">Conversation ${currentConversationId}</span></div>`;
+    }
+  });
+  convBox.addEventListener("click", () => {
     loadConversation(currentConversationId);
   });
-  discussionsList.appendChild(convLink);
+  discussionsList.appendChild(convBox);
   chatContainer.style.display = "none";
 }
 
@@ -451,89 +477,3 @@ sendMessageBtn.addEventListener("click", async () => {
     chatInput.value = "";
   }
 });
-
-// Bouton prolonger (s'il est présent, mais nous utilisons la checkbox)
-prolongerBtn.addEventListener("click", () => {
-  clearInterval(timerInterval);
-  promptProlongation();
-});
-
-// ---------------------------
-// Affichage de modal
-function showModal(message, onConfirm, onCancel, isAlert = false) {
-  const modal = document.getElementById("custom-modal");
-  const modalMessage = document.getElementById("modal-message");
-  const modalConfirm = document.getElementById("modal-confirm");
-  const modalCancel = document.getElementById("modal-cancel");
-  
-  modalMessage.textContent = message;
-  modal.style.display = "flex";
-  if (isAlert) {
-    modalConfirm.style.display = "none";
-    modalCancel.textContent = "Ok";
-  } else {
-    modalConfirm.style.display = "inline-block";
-    modalCancel.textContent = "Non";
-  }
-  modalConfirm.onclick = () => {
-    modal.style.display = "none";
-    if (onConfirm) onConfirm();
-  };
-  modalCancel.onclick = () => {
-    modal.style.display = "none";
-    if (onCancel) onCancel();
-  };
-}
-
-// ---------------------------
-// Chargement de l'historique des conversations (Discussions)
-// ---------------------------
-function loadConversationHistory() {
-  const convList = document.getElementById("discussions-list");
-  // Requête pour les conversations où l'utilisateur participe
-  const convQuery = query(collection(db, "conversations"), where("participants", "array-contains", auth.currentUser.uid));
-  onSnapshot(convQuery, (snapshot) => {
-    convList.innerHTML = "";
-    snapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      // Déterminer l'autre participant (supposons que "participants" est un tableau)
-      const otherUid = data.participants.filter(uid => uid !== auth.currentUser.uid)[0] || "Inconnu";
-      const otherName = data.otherName || "Inconnu"; // Vous pouvez stocker ce champ dans le doc conversation
-      const lastMsg = data.lastMessage || { text: "", sender: "" };
-      
-      // Statut du message
-      let statusText = "";
-      if (lastMsg.sender !== auth.currentUser.uid) {
-        if (!lastMsg.readBy || !lastMsg.readBy.includes(auth.currentUser.uid)) {
-          statusText = "Nouveau";
-        } else {
-          statusText = "À vous";
-        }
-      } else {
-        if (lastMsg.readBy && lastMsg.readBy.includes(otherUid)) {
-          statusText = "Lu";
-        } else {
-          statusText = "Non lu";
-        }
-      }
-      
-      // Créer une case de conversation
-      const convBox = document.createElement("div");
-      convBox.classList.add("conversation-box");
-      convBox.innerHTML = `
-        <div class="conversation-header">
-          <span class="conversation-name">${otherName}</span>
-          <span class="conversation-status">${statusText}</span>
-        </div>
-        <div class="conversation-lastmsg">${lastMsg.text}</div>
-      `;
-      convBox.addEventListener("click", () => {
-        loadConversation(docSnap.id);
-      });
-      convList.appendChild(convBox);
-    });
-  });
-}
-
-// Appeler le chargement de l'historique après authentification
-// (Déjà appelé dans auth.onAuthStateChanged)

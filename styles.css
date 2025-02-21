@@ -421,7 +421,7 @@ button:hover {
   color: #fff !important;
 }
 
-/* Alignement "Mode sombre" sur une ligne */
+/* Alignement "Mode sombre" */
 .dark-mode-toggle-container {
   display: flex;
   align-items: center;
@@ -429,7 +429,7 @@ button:hover {
   gap: 10px;
 }
 
-/* Historique des conversations */
+/* Historique des conversations (Discussions) */
 .conversation-box {
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -464,7 +464,7 @@ button:hover {
   margin-top: 5px;
 }
 
-/* Centrage et alignement du formulaire de contact */
+/* Formulaire de contact */
 #contact-section.section.active {
   display: flex;
   flex-direction: column;
