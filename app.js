@@ -25,7 +25,10 @@ let currentConversationId = null;
 let messagesListenerUnsubscribe = null;
 let requestsProlongUnsubscribe = null;
 
-// Fonction pour générer un identifiant de conversation unique
+const prolongerCheckbox = document.getElementById("prolonger-checkbox");
+const prolongerLabel = document.getElementById("prolonger-label");
+
+// Fonction pour générer un identifiant de conversation unique (tri lexicographique)
 function getConversationId(u1, u2) {
   return [u1, u2].sort().join("_");
 }
@@ -103,7 +106,7 @@ async function addToWaitingList() {
   if (!currentUserData) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
+    if (userDoc.exists()){
       currentUserData = userDoc.data();
     } else {
       console.error("Données utilisateur introuvables");
@@ -141,7 +144,7 @@ auth.onAuthStateChanged(async (user) => {
   if (user) {
     const userDocRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userDocRef);
-    if (userDoc.exists()) {
+    if (userDoc.exists()){
       currentUserData = userDoc.data();
       document.getElementById("display-prenom").textContent = `Prénom: ${currentUserData.prenom}`;
       document.getElementById("display-age").textContent = `Âge: ${currentUserData.age}`;
@@ -158,6 +161,8 @@ auth.onAuthStateChanged(async (user) => {
       if (document.getElementById("speed-dating-section").classList.contains("active")) {
          await addToWaitingList();
       }
+      // Charger l'historique des conversations
+      loadConversationHistory();
     }
   }
 });
@@ -221,14 +226,12 @@ const chatContainer = document.getElementById("chat-container");
 const chatWindow = document.getElementById("chat-window");
 const chatInput = document.getElementById("chat-input");
 const sendMessageBtn = document.getElementById("send-message");
-const prolongerCheckbox = document.getElementById("prolonger-checkbox");
-const prolongerLabel = document.getElementById("prolonger-label");
 const chatTimer = document.getElementById("chat-timer");
-const prolongerBtn = document.getElementById("prolonger-btn"); // s'il est présent dans HTML, même caché
+// Nous utilisons la checkbox pour prolonger (prolongerCheckbox) et son label (prolongerLabel)
+// Le bouton prolonger "prolonger-btn" est masqué dans HTML
 
 let timerInterval;
 let timeLeft = 540;
-
 let waitingCount = 0;
 const waitingCountSpan = document.getElementById("waiting-count");
 
@@ -246,7 +249,7 @@ function startChat(conversationId) {
   prolongerCheckbox.disabled = false;
   prolongerLabel.textContent = "Prolonger";
 
-  // Écoute messages
+  // Écoute des messages en temps réel
   if (messagesListenerUnsubscribe) {
     messagesListenerUnsubscribe();
   }
@@ -271,11 +274,11 @@ function startChat(conversationId) {
     }
   );
 
-  // Écoute requestsProlong
+  // Écoute du champ requestsProlong dans la conversation
+  const convRef = doc(db, "conversations", currentConversationId);
   if (requestsProlongUnsubscribe) {
     requestsProlongUnsubscribe();
   }
-  const convRef = doc(db, "conversations", currentConversationId);
   requestsProlongUnsubscribe = onSnapshot(convRef, (docSnap) => {
     if (!docSnap.exists()) return;
     const data = docSnap.data();
@@ -286,12 +289,10 @@ function startChat(conversationId) {
       if (requests[uid]) countTrue++;
     }
     if (countTrue >= 2) {
-      // Les deux ont coché => on transfère
       transferChatToDiscussions();
     }
   });
 
-  // Timer
   timerInterval = setInterval(() => {
     timeLeft--;
     updateChatTimer();
@@ -308,13 +309,13 @@ function updateChatTimer() {
   chatTimer.textContent = `${minutes}:${seconds}`;
 }
 
-// Quand on coche prolonger
+// Gestion de la checkbox "Prolonger"
 prolongerCheckbox.addEventListener("change", async (e) => {
   if (e.target.checked) {
     prolongerCheckbox.disabled = true;
     prolongerLabel.textContent = "Prolongation demandée";
     const myPrenom = currentUserData.prenom || "Quelqu'un";
-    // Envoyer un message "X veut prolonger"
+    // Envoyer un message dans le chat
     await setDoc(
       doc(collection(db, "conversations", currentConversationId, "messages")),
       {
@@ -324,7 +325,7 @@ prolongerCheckbox.addEventListener("change", async (e) => {
         timestamp: serverTimestamp()
       }
     );
-    // Mettre requestsProlong[uid] = true
+    // Mettre à jour le document conversation
     const convRef = doc(db, "conversations", currentConversationId);
     await setDoc(convRef, {
       requestsProlong: {
@@ -334,16 +335,14 @@ prolongerCheckbox.addEventListener("change", async (e) => {
   }
 });
 
-// Fin du temps
+// Fin du temps : proposer la prolongation via pop-up
 function promptProlongation() {
   showModal("Voulez-vous prolonger la rencontre ?", async () => {
-    // L'utilisateur dit OUI => on coche la checkbox si pas déjà
     if (!prolongerCheckbox.checked) {
       prolongerCheckbox.checked = true;
       prolongerCheckbox.disabled = true;
       prolongerLabel.textContent = "Prolongation demandée";
       const myPrenom = currentUserData.prenom || "Quelqu'un";
-      // Envoyer message
       await setDoc(
         doc(collection(db, "conversations", currentConversationId, "messages")),
         {
@@ -353,7 +352,6 @@ function promptProlongation() {
           timestamp: serverTimestamp()
         }
       );
-      // Maj Firestore
       const convRef = doc(db, "conversations", currentConversationId);
       await setDoc(convRef, {
         requestsProlong: {
@@ -367,7 +365,7 @@ function promptProlongation() {
   });
 }
 
-// Transfert conversation => Discussions
+// Transfert de la conversation vers la section Discussions
 function transferChatToDiscussions() {
   const discussionsList = document.getElementById("discussions-list");
   const convLink = document.createElement("a");
@@ -387,7 +385,7 @@ function loadConversation(convId) {
   startChat(convId);
 }
 
-// Surveille la waiting list
+// Surveille la waiting list en temps réel
 onSnapshot(collection(db, "waiting"), (snapshot) => {
   waitingCount = snapshot.size;
   updateWaitingCount();
@@ -454,13 +452,14 @@ sendMessageBtn.addEventListener("click", async () => {
   }
 });
 
-// (Bouton prolonger masqué, si besoin)
+// Bouton prolonger (s'il est présent, mais nous utilisons la checkbox)
 prolongerBtn.addEventListener("click", () => {
   clearInterval(timerInterval);
   promptProlongation();
 });
 
-// Modal
+// ---------------------------
+// Affichage de modal
 function showModal(message, onConfirm, onCancel, isAlert = false) {
   const modal = document.getElementById("custom-modal");
   const modalMessage = document.getElementById("modal-message");
@@ -485,3 +484,56 @@ function showModal(message, onConfirm, onCancel, isAlert = false) {
     if (onCancel) onCancel();
   };
 }
+
+// ---------------------------
+// Chargement de l'historique des conversations (Discussions)
+// ---------------------------
+function loadConversationHistory() {
+  const convList = document.getElementById("discussions-list");
+  // Requête pour les conversations où l'utilisateur participe
+  const convQuery = query(collection(db, "conversations"), where("participants", "array-contains", auth.currentUser.uid));
+  onSnapshot(convQuery, (snapshot) => {
+    convList.innerHTML = "";
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      // Déterminer l'autre participant (supposons que "participants" est un tableau)
+      const otherUid = data.participants.filter(uid => uid !== auth.currentUser.uid)[0] || "Inconnu";
+      const otherName = data.otherName || "Inconnu"; // Vous pouvez stocker ce champ dans le doc conversation
+      const lastMsg = data.lastMessage || { text: "", sender: "" };
+      
+      // Statut du message
+      let statusText = "";
+      if (lastMsg.sender !== auth.currentUser.uid) {
+        if (!lastMsg.readBy || !lastMsg.readBy.includes(auth.currentUser.uid)) {
+          statusText = "Nouveau";
+        } else {
+          statusText = "À vous";
+        }
+      } else {
+        if (lastMsg.readBy && lastMsg.readBy.includes(otherUid)) {
+          statusText = "Lu";
+        } else {
+          statusText = "Non lu";
+        }
+      }
+      
+      // Créer une case de conversation
+      const convBox = document.createElement("div");
+      convBox.classList.add("conversation-box");
+      convBox.innerHTML = `
+        <div class="conversation-header">
+          <span class="conversation-name">${otherName}</span>
+          <span class="conversation-status">${statusText}</span>
+        </div>
+        <div class="conversation-lastmsg">${lastMsg.text}</div>
+      `;
+      convBox.addEventListener("click", () => {
+        loadConversation(docSnap.id);
+      });
+      convList.appendChild(convBox);
+    });
+  });
+}
+
+// Appeler le chargement de l'historique après authentification
+// (Déjà appelé dans auth.onAuthStateChanged)

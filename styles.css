@@ -1,14 +1,22 @@
 /* -----------------------
    Réinitialisation de base
 ------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 html, body {
   margin: 0;
   padding: 0;
-  height: 100%; /* Pour que le body s'étende sur 100% de la fenêtre */
+  height: 100%;
 }
 
 body {
-  min-height: 100vh; /* S'assurer que le dégradé couvre au moins la hauteur de l'écran */
+  min-height: 100vh;
   font-family: Arial, sans-serif;
   background: linear-gradient(120deg, #ff78a4, #ffa84d, #a84cff);
   background-size: 400% 400%;
@@ -23,7 +31,7 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-/* Container (pages de connexion/inscription) */
+/* Container principal */
 .container {
   max-width: 400px;
   margin: 50px auto;
@@ -127,7 +135,7 @@ body {
   text-decoration: underline;
 }
 
-/* En-tête (app) */
+/* En-tête */
 header {
   position: fixed;
   top: 0;
@@ -193,7 +201,7 @@ main {
   padding: 20px;
 }
 
-/* Sections masquées par défaut */
+/* Sections */
 .section {
   display: none;
   animation: fadeIn 0.5s ease-in;
@@ -419,6 +427,41 @@ button:hover {
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+/* Historique des conversations */
+.conversation-box {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+.conversation-box:hover {
+  background-color: #ffe5e5;
+}
+.conversation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+}
+.conversation-name {
+  font-size: 1rem;
+}
+.conversation-status {
+  font-size: 0.9rem;
+  background: #ff69b4;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+.conversation-lastmsg {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 5px;
 }
 
 /* Centrage et alignement du formulaire de contact */
