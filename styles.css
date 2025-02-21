@@ -24,7 +24,7 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-/* Container (pages de connexion/inscription) */
+/* Container principal */
 .container {
   max-width: 400px;
   margin: 50px auto;
@@ -41,12 +41,13 @@ body {
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* Menu d'inscription plus beau */
+/* Formulaire d'inscription amélioré */
 .signup-card {
   background: #ffe5e5;
   border: 1px solid #ffcccc;
   max-width: 500px;
   margin: 20px auto;
+  padding: 20px 30px;
 }
 
 .signup-card h2 {
@@ -80,6 +81,7 @@ body {
   outline: none;
 }
 
+/* Conteneur de date */
 .dob-container {
   display: flex;
   gap: 5px;
@@ -123,11 +125,12 @@ body {
   color: #e53e3e;
   text-decoration: none;
 }
+
 .toggle-form a:hover {
   text-decoration: underline;
 }
 
-/* En-tête (app) */
+/* En-tête de l'application */
 header {
   position: fixed;
   top: 0;
@@ -165,23 +168,28 @@ header {
   transition: left 0.3s ease;
   z-index: 1100;
 }
+
 .sidebar.active {
   left: 0;
 }
+
 .sidebar ul {
   list-style: none;
   padding: 0;
   text-align: center;
 }
+
 .sidebar ul li {
   margin: 20px 0;
 }
+
 .sidebar ul li a {
   color: #fff;
   font-size: 18px;
   text-decoration: none;
   transition: color 0.3s;
 }
+
 .sidebar ul li a:hover {
   color: #ffd700;
 }
@@ -198,11 +206,12 @@ main {
   display: none;
   animation: fadeIn 0.5s ease-in;
 }
+
 .section.active {
   display: block;
 }
 
-/* Pour la section Contact, on veut un layout flex quand elle est active */
+/* Section Contact en mode actif : affichage en flex */
 #contact-section.section.active {
   display: flex;
   flex-direction: column;
@@ -210,12 +219,13 @@ main {
   gap: 15px;
 }
 
+/* Animation fadeIn */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* H2 */
+/* Titres */
 h2 {
   margin-bottom: 20px;
   font-size: 1.8rem;
@@ -226,13 +236,14 @@ h2 {
 .logo-container {
   margin-bottom: 20px;
 }
+
 .logo {
   max-width: 150px;
   display: block;
   margin: 0 auto;
 }
 
-/* Formulaires et inputs (connexion) */
+/* Inputs, selects, textarea */
 input, select, textarea {
   width: 90%;
   margin: 10px auto;
@@ -242,15 +253,17 @@ input, select, textarea {
   font-size: 1rem;
   text-align: center;
 }
+
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: #ff4d4d;
 }
+
 ::placeholder {
   color: #888;
 }
 
-/* Boutons (connexion) */
+/* Boutons */
 button {
   width: 90%;
   margin: 20px auto;
@@ -264,6 +277,7 @@ button {
   transition: background-color 0.3s;
   display: block;
 }
+
 button:hover {
   background-color: #e53e3e;
 }
@@ -273,6 +287,7 @@ button:hover {
   margin: 5px 0;
   font-size: 1.1rem;
 }
+
 .preferences, .options {
   margin: 20px auto;
   max-width: 600px;
@@ -280,6 +295,7 @@ button:hover {
   padding: 20px;
   border-radius: 10px;
 }
+
 .age-range-container {
   display: flex;
   justify-content: center;
@@ -293,6 +309,7 @@ button:hover {
   border-radius: 10px;
   margin-bottom: 20px;
 }
+
 .waiting-screen p {
   font-size: 1.2rem;
   margin-bottom: 10px;
@@ -308,6 +325,7 @@ button:hover {
   margin: 20px auto;
   animation: spin 2s linear infinite;
 }
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -322,12 +340,14 @@ button:hover {
   margin: 20px auto;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
+
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
 }
+
 .chat-window {
   border: 1px solid #ccc;
   height: 250px;
@@ -337,6 +357,7 @@ button:hover {
   border-radius: 5px;
   margin-bottom: 10px;
 }
+
 .chat-message {
   margin: 8px 0;
   padding: 8px 12px;
@@ -344,20 +365,24 @@ button:hover {
   max-width: 80%;
   word-wrap: break-word;
 }
+
 .chat-message.self {
   background: #ffcccc;
   margin-left: auto;
   text-align: right;
 }
+
 .chat-message.other {
   background: #cce5ff;
   margin-right: auto;
   text-align: left;
 }
+
 .chat-input {
   display: flex;
   gap: 10px;
 }
+
 .chat-input input {
   flex: 1;
 }
@@ -375,6 +400,7 @@ button:hover {
   align-items: center;
   z-index: 2000;
 }
+
 .modal-content {
   background: #fff;
   padding: 20px;
@@ -383,6 +409,7 @@ button:hover {
   width: 90%;
   text-align: center;
 }
+
 .modal-buttons {
   margin-top: 20px;
   display: flex;
@@ -394,12 +421,15 @@ button:hover {
   background: #222 !important;
   color: #ddd !important;
 }
+
 .dark-mode header {
   background: #333 !important;
 }
+
 .dark-mode .sidebar {
   background: #000 !important;
 }
+
 .dark-mode .card, 
 .dark-mode .preferences, 
 .dark-mode .options, 
@@ -408,6 +438,7 @@ button:hover {
   background: #333 !important;
   color: #ddd !important;
 }
+
 .dark-mode input,
 .dark-mode select,
 .dark-mode textarea,
@@ -416,6 +447,7 @@ button:hover {
   color: #ddd !important;
   border-color: #777 !important;
 }
+
 .dark-mode .modal-content {
   background: #444 !important;
   color: #fff !important;
@@ -427,4 +459,34 @@ button:hover {
   align-items: center;
   justify-content: center;
   gap: 10px;
+}
+
+/* Centrage et alignement du formulaire de contact */
+#contact-section.section.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+#contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 600px;
+  width: 100%;
+}
+
+#contact-form label {
+  text-align: left;
+  margin-bottom: 5px;
+  font-weight: bold;
+  width: 90%;
+  margin: 0 auto;
+}
+
+#contact-form input,
+#contact-form textarea {
+  width: 90%;
+  margin: 0 auto;
 }

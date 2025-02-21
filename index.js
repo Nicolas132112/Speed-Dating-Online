@@ -89,11 +89,10 @@ document.getElementById("code-postal").addEventListener("input", async (e) => {
   }
 });
 
-// Inscription
+// Inscription (sans pseudo)
 document.getElementById("signup-btn").addEventListener("click", async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
-  const username = document.getElementById("username").value;
   const prenom = document.getElementById("prenom").value;
   const sexe = document.getElementById("sexe").value.toLowerCase(); 
   const codePostal = document.getElementById("code-postal").value;
@@ -111,7 +110,7 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
     age--;
   }
 
-  if (!email || !password || !username || !prenom || !sexe || isNaN(age) || !codePostal || !ville) {
+  if (!email || !password || !prenom || !sexe || isNaN(age) || !codePostal || !ville) {
     alert("Merci de remplir tous les champs !");
     return;
   }
@@ -121,7 +120,6 @@ document.getElementById("signup-btn").addEventListener("click", async () => {
     const user = userCredential.user;
     await setDoc(doc(db, "users", user.uid), {
       email,
-      username,
       prenom,
       sexe,
       age,

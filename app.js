@@ -11,15 +11,23 @@ import {
   getDoc,
   query, 
   where, 
+  serverTimestamp,
   ref, 
   uploadBytes, 
   getDownloadURL 
 } from "./firebase-config.js";
 import { deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-// Variable globale pour stocker les données de l'utilisateur courant
+// Variables globales
 let currentUserData = null;
 let waitingActive = false; // indique si l'utilisateur est dans la waiting list
+let currentConversationId = null;
+let messagesListenerUnsubscribe = null;
+
+// Fonction pour générer un identifiant de conversation unique (tri lexicographique)
+function getConversationId(u1, u2) {
+  return [u1, u2].sort().join("_");
+}
 
 // ---------------------------
 // Gestion du dark mode
@@ -86,7 +94,7 @@ window.addEventListener("beforeunload", async () => {
 });
 
 // ---------------------------
-// Fonctions de gestion de la waiting list
+// Waiting list
 // ---------------------------
 async function addToWaitingList() {
   const user = auth.currentUser;
@@ -186,7 +194,7 @@ document.getElementById("save-preferences").addEventListener("click", async () =
 });
 
 // ---------------------------
-// Options : Suppression de compte
+// Suppression de compte
 // ---------------------------
 document.getElementById("delete-account-btn").addEventListener("click", async () => {
   const confirmation = document.getElementById("delete-confirm").value.trim().toLowerCase();
@@ -205,22 +213,85 @@ document.getElementById("delete-account-btn").addEventListener("click", async ()
 });
 
 // ---------------------------
-// Gestion du Speed Dating et Matching
+// Gestion des conversations pour Speed Dating
 // ---------------------------
-const waitingScreen = document.getElementById("waiting-screen");
-const chatContainer = document.getElementById("chat-container");
-const chatWindow = document.getElementById("chat-window");
-const chatInput = document.getElementById("chat-input");
-const sendMessageBtn = document.getElementById("send-message");
-const prolongerBtn = document.getElementById("prolonger-btn");
-const chatTimer = document.getElementById("chat-timer");
-
 let timerInterval;
 let timeLeft = 540;
-
 let waitingCount = 0;
 const waitingCountSpan = document.getElementById("waiting-count");
 
+// Fonction pour démarrer la conversation et attacher un listener aux messages
+function startChat(conversationId) {
+  currentConversationId = conversationId;
+  waitingScreen.style.display = "none";
+  chatContainer.style.display = "block";
+  chatWindow.innerHTML = "";
+  timeLeft = 540;
+  updateChatTimer();
+
+  // Attacher un listener pour les messages de cette conversation
+  if (messagesListenerUnsubscribe) {
+    messagesListenerUnsubscribe();
+  }
+  messagesListenerUnsubscribe = onSnapshot(
+    collection(db, "conversations", currentConversationId, "messages"),
+    (snapshot) => {
+      chatWindow.innerHTML = "";
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("chat-message", data.sender === auth.currentUser.uid ? "self" : "other");
+        const senderSpan = document.createElement("span");
+        senderSpan.classList.add("sender");
+        senderSpan.textContent = data.sender === auth.currentUser.uid ? "Moi" : "L'autre";
+        const textP = document.createElement("p");
+        textP.textContent = data.text;
+        msgDiv.appendChild(senderSpan);
+        msgDiv.appendChild(textP);
+        chatWindow.appendChild(msgDiv);
+      });
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+  );
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateChatTimer();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      promptProlongation();
+    }
+  }, 1000);
+}
+
+function updateChatTimer() {
+  let minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  let seconds = (timeLeft % 60).toString().padStart(2, '0');
+  chatTimer.textContent = `${minutes}:${seconds}`;
+}
+
+// ---------------------------
+// Gestion du transfert de chat vers Discussions
+function transferChatToDiscussions() {
+  // Ne pas effacer le chat ; créer un lien dans la section Discussions
+  const discussionsList = document.getElementById("discussions-list");
+  const convLink = document.createElement("a");
+  convLink.href = "#";
+  convLink.textContent = "Reprendre la conversation " + currentConversationId;
+  convLink.addEventListener("click", () => {
+    loadConversation(currentConversationId);
+  });
+  discussionsList.appendChild(convLink);
+  chatContainer.style.display = "none";
+}
+
+// Charger une conversation existante (basique)
+function loadConversation(convId) {
+  startChat(convId);
+}
+
+// ---------------------------
+// Matching
 onSnapshot(collection(db, "waiting"), (snapshot) => {
   waitingCount = snapshot.size;
   updateWaitingCount();
@@ -262,78 +333,36 @@ async function attemptMatching(waitingDocs) {
     console.log("candidateMatchesUser:", candidateMatchesUser, "userMatchesCandidate:", userMatchesCandidate);
     
     if (candidateMatchesUser && userMatchesCandidate) {
-      console.log("Match trouvé entre", user.uid, "et", candidateData.uid);
+      // Générer un identifiant de conversation unique basé sur les deux uid
+      const conversationId = getConversationId(user.uid, candidateData.uid);
+      console.log("Match trouvé entre", user.uid, "et", candidateData.uid, "-> Conversation:", conversationId);
       await deleteDoc(doc(db, "waiting", candidateData.uid));
       await deleteDoc(doc(db, "waiting", user.uid));
       waitingActive = false;
-      startChat();
+      startChat(conversationId);
       break;
     }
   }
 }
 
-function startChat() {
-  waitingScreen.style.display = "none";
-  chatContainer.style.display = "block";
-  timeLeft = 540;
-  updateChatTimer();
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    updateChatTimer();
-    if (timeLeft <= 0) {
-      clearInterval(timerInterval);
-      promptProlongation();
-    }
-  }, 1000);
+function getConversationId(u1, u2) {
+  return [u1, u2].sort().join("_");
 }
 
-function updateChatTimer() {
-  let minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-  let seconds = (timeLeft % 60).toString().padStart(2, '0');
-  chatTimer.textContent = `${minutes}:${seconds}`;
-}
-
-function promptProlongation() {
-  showModal("Voulez-vous prolonger la rencontre ?", () => {
-    transferChatToDiscussions();
-  }, () => {
-    showModal("La rencontre est terminée.", null, null, true);
-    chatWindow.innerHTML = "";
-    chatContainer.style.display = "none";
-  });
-}
-
-function transferChatToDiscussions() {
-  const discussionsList = document.getElementById("discussions-list");
-  const discussionDiv = document.createElement("div");
-  discussionDiv.classList.add("discussion");
-  discussionDiv.innerHTML = chatWindow.innerHTML;
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "Supprimer la discussion";
-  deleteBtn.addEventListener("click", () => {
-    discussionsList.removeChild(discussionDiv);
-  });
-  discussionDiv.appendChild(deleteBtn);
-  discussionsList.appendChild(discussionDiv);
-  chatWindow.innerHTML = "";
-  chatContainer.style.display = "none";
-}
-
-sendMessageBtn.addEventListener("click", () => {
+// ---------------------------
+// Chat : Envoi de messages
+sendMessageBtn.addEventListener("click", async () => {
   const message = chatInput.value.trim();
-  if (message) {
-    const msgDiv = document.createElement("div");
-    msgDiv.classList.add("chat-message", "self");
-    const senderSpan = document.createElement("span");
-    senderSpan.classList.add("sender");
-    senderSpan.textContent = "Moi";
-    const textP = document.createElement("p");
-    textP.textContent = message;
-    msgDiv.appendChild(senderSpan);
-    msgDiv.appendChild(textP);
-    chatWindow.appendChild(msgDiv);
+  if (message && currentConversationId) {
+    await setDoc(
+      doc(collection(db, "conversations", currentConversationId, "messages")),
+      {
+         sender: auth.currentUser.uid,
+         text: message,
+         timestamp: serverTimestamp()
+      }
+    );
     chatInput.value = "";
-    chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 });
 
@@ -341,6 +370,16 @@ prolongerBtn.addEventListener("click", () => {
   clearInterval(timerInterval);
   promptProlongation();
 });
+
+function promptProlongation() {
+  showModal("Voulez-vous prolonger la rencontre ?", () => {
+    transferChatToDiscussions();
+  }, () => {
+    showModal("La rencontre est terminée.", null, null, true);
+    // Ne pas effacer les messages, ils sont sauvegardés dans Firestore
+    chatContainer.style.display = "none";
+  });
+}
 
 // ---------------------------
 // Fonction utilitaire d'affichage de modal
@@ -366,4 +405,4 @@ function showModal(message, onConfirm, onCancel, isAlert = false) {
     modal.style.display = "none";
     if (onCancel) onCancel();
   };
-}
+};

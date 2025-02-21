@@ -12,7 +12,8 @@ import {
   getDocs, 
   getDoc,
   query, 
-  where 
+  where, 
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 import { 
   getStorage, 
@@ -21,9 +22,8 @@ import {
   getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-storage.js";
 
-// Veillez à bien mettre VOTRE clé d'API ici :
 const firebaseConfig = {
-  apiKey: "AIzaSyDrA7vok6bdGcs-cUnK_yKG9tdsW4lFQWw", // <--- IMPORTANT : Mettez la vraie clé depuis votre console Firebase
+  apiKey: "AIzaSyDrA7vok6bdGcs-cUnK_yKG9tdsW4lFQWw", // Remplacez par votre clé d'API réelle
   authDomain: "speeddatingapp-e7691.firebaseapp.com",
   projectId: "speeddatingapp-e7691",
   storageBucket: "speeddatingapp-e7691.appspot.com",
@@ -49,6 +49,7 @@ export {
   getDoc,
   query, 
   where, 
+  serverTimestamp,
   ref, 
   uploadBytes, 
   getDownloadURL 
