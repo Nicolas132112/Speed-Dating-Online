@@ -215,12 +215,21 @@ document.getElementById("delete-account-btn").addEventListener("click", async ()
 // ---------------------------
 // Gestion des conversations pour Speed Dating
 // ---------------------------
+const waitingScreen = document.getElementById("waiting-screen");
+const chatContainer = document.getElementById("chat-container");
+const chatWindow = document.getElementById("chat-window");
+const chatInput = document.getElementById("chat-input");
+const sendMessageBtn = document.getElementById("send-message");
+const prolongerBtn = document.getElementById("prolonger-btn");
+const chatTimer = document.getElementById("chat-timer");
+
 let timerInterval;
 let timeLeft = 540;
+
 let waitingCount = 0;
 const waitingCountSpan = document.getElementById("waiting-count");
 
-// Fonction pour démarrer la conversation et attacher un listener aux messages
+// Démarrer le chat pour la conversation donnée
 function startChat(conversationId) {
   currentConversationId = conversationId;
   waitingScreen.style.display = "none";
@@ -229,10 +238,11 @@ function startChat(conversationId) {
   timeLeft = 540;
   updateChatTimer();
 
-  // Attacher un listener pour les messages de cette conversation
+  // Si on écoutait déjà une autre conversation, on arrête
   if (messagesListenerUnsubscribe) {
     messagesListenerUnsubscribe();
   }
+  // Écoute en temps réel des messages de la conversation
   messagesListenerUnsubscribe = onSnapshot(
     collection(db, "conversations", currentConversationId, "messages"),
     (snapshot) => {
@@ -270,14 +280,24 @@ function updateChatTimer() {
   chatTimer.textContent = `${minutes}:${seconds}`;
 }
 
-// ---------------------------
-// Gestion du transfert de chat vers Discussions
+// Proposer de prolonger la rencontre
+function promptProlongation() {
+  showModal("Voulez-vous prolonger la rencontre ?", () => {
+    transferChatToDiscussions();
+  }, () => {
+    showModal("La rencontre est terminée.", null, null, true);
+    chatContainer.style.display = "none";
+  });
+}
+
+// Ajouter un lien vers la conversation dans "Discussions"
 function transferChatToDiscussions() {
-  // Ne pas effacer le chat ; créer un lien dans la section Discussions
   const discussionsList = document.getElementById("discussions-list");
   const convLink = document.createElement("a");
   convLink.href = "#";
   convLink.textContent = "Reprendre la conversation " + currentConversationId;
+  convLink.style.display = "block";
+  convLink.style.margin = "10px 0";
   convLink.addEventListener("click", () => {
     loadConversation(currentConversationId);
   });
@@ -285,13 +305,12 @@ function transferChatToDiscussions() {
   chatContainer.style.display = "none";
 }
 
-// Charger une conversation existante (basique)
+// Charger une conversation existante
 function loadConversation(convId) {
   startChat(convId);
 }
 
-// ---------------------------
-// Matching
+// Surveille la waiting list en temps réel
 onSnapshot(collection(db, "waiting"), (snapshot) => {
   waitingCount = snapshot.size;
   updateWaitingCount();
@@ -305,6 +324,7 @@ function updateWaitingCount() {
   waitingCountSpan.textContent = waitingCount;
 }
 
+// Vérifie si deux utilisateurs correspondent et lance le chat
 async function attemptMatching(waitingDocs) {
   const user = auth.currentUser;
   if (!user || !currentUserData) return;
@@ -333,9 +353,10 @@ async function attemptMatching(waitingDocs) {
     console.log("candidateMatchesUser:", candidateMatchesUser, "userMatchesCandidate:", userMatchesCandidate);
     
     if (candidateMatchesUser && userMatchesCandidate) {
-      // Générer un identifiant de conversation unique basé sur les deux uid
+      // Générer un identifiant de conversation unique
       const conversationId = getConversationId(user.uid, candidateData.uid);
       console.log("Match trouvé entre", user.uid, "et", candidateData.uid, "-> Conversation:", conversationId);
+
       await deleteDoc(doc(db, "waiting", candidateData.uid));
       await deleteDoc(doc(db, "waiting", user.uid));
       waitingActive = false;
@@ -345,12 +366,7 @@ async function attemptMatching(waitingDocs) {
   }
 }
 
-function getConversationId(u1, u2) {
-  return [u1, u2].sort().join("_");
-}
-
-// ---------------------------
-// Chat : Envoi de messages
+// Envoi de message
 sendMessageBtn.addEventListener("click", async () => {
   const message = chatInput.value.trim();
   if (message && currentConversationId) {
@@ -371,18 +387,8 @@ prolongerBtn.addEventListener("click", () => {
   promptProlongation();
 });
 
-function promptProlongation() {
-  showModal("Voulez-vous prolonger la rencontre ?", () => {
-    transferChatToDiscussions();
-  }, () => {
-    showModal("La rencontre est terminée.", null, null, true);
-    // Ne pas effacer les messages, ils sont sauvegardés dans Firestore
-    chatContainer.style.display = "none";
-  });
-}
-
 // ---------------------------
-// Fonction utilitaire d'affichage de modal
+// Fonction d'affichage de modal
 function showModal(message, onConfirm, onCancel, isAlert = false) {
   const modal = document.getElementById("custom-modal");
   const modalMessage = document.getElementById("modal-message");
@@ -405,4 +411,4 @@ function showModal(message, onConfirm, onCancel, isAlert = false) {
     modal.style.display = "none";
     if (onCancel) onCancel();
   };
-};
+}
